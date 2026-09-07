@@ -186,6 +186,7 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .deck-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
 .deck-actions .n-input{display:flex;align-items:center;gap:6px;background:var(--stone-900);border:1px solid var(--stone-600);border-radius:4px;padding:4px 8px;}
 .deck-actions .n-input input{width:44px;background:none;border:none;color:var(--parchment);text-align:center;padding:2px;}
+.deck-actions .n-input .step-btn{width:32px;height:32px;padding:0;font-size:1.05rem;line-height:1;}
 
 ul.card-list{list-style:none;margin:0;padding:0;}
 ul.card-list li{border:1px solid var(--stone-700);border-radius:5px;padding:8px 10px;margin-bottom:7px;background:var(--stone-900);}
@@ -1270,7 +1271,7 @@ function renderDeckControls(def, zone){
   var typesPresent = Array.from(new Set(zone.cards.map(function(c){return c.type;}).filter(Boolean)));
   var html = '<div class="deck-actions">';
   html += '<button class="btn" id="daShuffle">シャッフル</button>';
-  html += '<div class="n-input"><span style="font-size:0.75rem;color:var(--parchment-faint);">移動</span><input type="number" id="daN" value="1" min="1" max="'+zone.cards.length+'"><button class="btn small" id="daMove">実行</button></div>';
+  html += '<div class="n-input"><span style="font-size:0.75rem;color:var(--parchment-faint);">移動</span><button class="btn step-btn" id="daNMinus" aria-label="移動枚数を減らす">−</button><input type="number" id="daN" value="1" min="1" max="'+Math.max(1, zone.cards.length)+'" inputmode="numeric"><button class="btn step-btn" id="daNPlus" aria-label="移動枚数を増やす">＋</button><button class="btn small" id="daMove">実行</button></div>';
   html += '</div>';
   if(typesPresent.length > 0){
     html += '<div style="margin-bottom:10px;"><div style="font-size:0.72rem;color:var(--parchment-faint);margin-bottom:6px;">検索（指定属性）</div><div class="dest-list">';
@@ -1434,12 +1435,20 @@ function wireZoneDrawerEvents(def, zone){
   });
 
   if(def.type === "deck"){
+    var moveCountInput = document.getElementById("daN");
+    function changeMoveCount(delta){
+      var max = Math.max(1, zone.cards.length);
+      moveCountInput.value = Math.max(1, Math.min(max, (Number(moveCountInput.value) || 1) + delta));
+    }
+    document.getElementById("daNMinus").addEventListener("click", function(){ changeMoveCount(-1); });
+    document.getElementById("daNPlus").addEventListener("click", function(){ changeMoveCount(1); });
+    moveCountInput.addEventListener("change", function(){ changeMoveCount(0); });
     document.getElementById("daShuffle").addEventListener("click", function(){
       shuffleArray(zone.cards);
       save(); renderZoneDrawer();
     });
     document.getElementById("daMove").addEventListener("click", function(){
-      var n = Math.max(1, Math.min(zone.cards.length, Number(document.getElementById("daN").value)||1));
+      var n = Math.max(1, Math.min(zone.cards.length, Number(moveCountInput.value)||1));
       if(zone.cards.length === 0){ alert("デッキにカードがありません"); return; }
       openDestPicker(function(destId, toTop){
         var moving = zone.cards.splice(0, n);
