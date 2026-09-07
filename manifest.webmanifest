@@ -1,0 +1,26 @@
+{
+  "name": "Imperium ソロプレイフィールド",
+  "short_name": "Imperium",
+  "description": "Imperium 帝国の時代のソロプレイ補助アプリ",
+  "id": "./imperium-playfield",
+  "start_url": "./imperium_playfield_v1.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#1E1D1B",
+  "theme_color": "#242220",
+  "icons": [
+    {
+      "src": "./imperium-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./imperium-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

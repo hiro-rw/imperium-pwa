@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="92" fill="#242220"/>
+  <rect x="28" y="28" width="456" height="456" rx="72" fill="none" stroke="#C9A227" stroke-width="18"/>
+  <path d="M132 158l62 42 62-92 62 92 62-42-25 114H157z" fill="#C9A227"/>
+  <path d="M177 303h158v28H177zm24 48h110v28H201z" fill="#EDE6D6"/>
+  <text x="256" y="462" fill="#EDE6D6" font-family="Georgia,serif" font-size="72" text-anchor="middle">I</text>
+</svg>
