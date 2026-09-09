@@ -98,20 +98,19 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .action-state-tabs{display:flex;gap:8px;margin-bottom:12px;}
 .action-state-tabs button{flex:1;padding:9px;border-radius:4px;border:1px solid var(--stone-600);background:var(--stone-900);color:var(--parchment-dim);}
 .action-state-tabs button.on{border-color:var(--gold);color:var(--gold);background:rgba(201,162,39,0.08);}
-.bot-action-list{list-style:none;margin:0;padding:0;}
-.bot-action-list li{background:var(--stone-900);border:1px solid var(--stone-700);border-radius:5px;padding:10px 12px;margin-bottom:8px;}
-.bot-action-list .action-name{font-family:var(--serif);font-size:0.95rem;color:var(--parchment);margin-bottom:5px;}
-.bot-action-list .action-text{font-size:0.78rem;line-height:1.55;color:var(--parchment-dim);white-space:pre-wrap;}
-.board-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;max-width:1800px;margin:0 auto;padding-right:14px;align-items:start;}
+.quick-action-row{display:flex;gap:6px;margin-top:5px;}
+.quick-action-row .btn{flex:1;}
+.status-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:5px;}
+.status-action-grid .state-control-row,.status-action-grid .quick-action-row{margin:0;}
+.board-layout{max-width:1800px;margin:0 auto;}
 .board-main{min-width:0;}
-.action-reference{position:sticky;top:210px;max-height:calc(100vh - 224px);overflow-y:auto;background:var(--stone-800);border:1px solid var(--stone-700);border-left:3px solid var(--oxblood);border-radius:6px;padding:12px;margin-top:12px;}
-.action-reference h2{font-size:1rem;margin-bottom:5px;}
-.action-reference .subtitle{font-size:0.68rem;color:var(--parchment-faint);margin-bottom:12px;line-height:1.45;}
-@media(max-width:1000px){.board-layout{grid-template-columns:1fr;padding-right:0;}.action-reference{position:static;max-height:none;margin:0 16px 24px;}}
 @media(max-width:650px){.status-grid{grid-template-columns:1fr;}.status-panel{padding:9px;}}
 
 /* ---------- board sections ---------- */
 .section-title{font-size:0.68rem;letter-spacing:0.05em;color:var(--parchment-faint);margin:16px 16px 6px;}
+.field-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.field-symbol-counts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;font-size:0.64rem;letter-spacing:0;color:var(--parchment-dim);}
+.field-symbol-counts span{padding:2px 5px;background:var(--stone-800);border:1px solid var(--stone-700);border-radius:8px;white-space:nowrap;}
 .section-title.player{color:var(--verdigris);}
 .section-title.bot{color:var(--oxblood);}
 .zone-row{display:flex;gap:8px;overflow-x:auto;padding:0 16px 8px;-webkit-overflow-scrolling:touch;}
@@ -120,6 +119,7 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .shared-zone-row .zone-tile{width:auto;min-width:104px;}
 .shared-zone-row.shared-special-row{grid-template-columns:repeat(4,minmax(104px,1fr));min-width:448px;}
 .shared-publish-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:0 16px 8px;min-width:0;}
+.shared-publish-row:empty{display:none;}
 .shared-publish-cell{min-width:104px;text-align:center;}
 .shared-publish-cell button{width:100%;padding:7px 5px;font-size:0.75rem;}
 .shared-publish-cell .arrow{display:block;font-size:0.62rem;color:var(--parchment-faint);margin-top:2px;}
@@ -144,6 +144,12 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .field-card.hand-card{border-top-color:var(--gold);}
 .field-card.action-deck-card{border-top-color:var(--oxblood);}
 .field-card.action-deck-card.concealed{min-height:150px;background:repeating-linear-gradient(135deg,var(--stone-800),var(--stone-800) 10px,var(--stone-750) 10px,var(--stone-750) 20px);}
+.bot-action-result{margin-top:9px;padding:9px;border:1px solid var(--gold);border-radius:5px;background:rgba(201,162,39,0.08);}
+.bot-action-result.fallback{border-color:var(--stone-600);background:var(--stone-850);}
+.bot-action-result .result-label{font-size:0.65rem;color:var(--gold);margin-bottom:4px;}
+.bot-action-result.fallback .result-label{color:var(--parchment-faint);}
+.bot-action-result .result-name{font-family:var(--serif);font-size:0.88rem;color:var(--parchment);margin-bottom:4px;}
+.bot-action-result .result-text{font-size:0.74rem;line-height:1.5;color:var(--parchment-dim);white-space:pre-wrap;}
 .concealed-card-label{font-family:var(--serif);font-size:1rem;color:var(--parchment-faint);text-align:center;margin:auto 0;}
 .field-card.exhausted{border-top-color:var(--oxblood);background:rgba(177,84,74,0.08);}
 .field-card.card-type-civilised{border-top-color:#e8e4d8;background:rgba(232,228,216,0.06);}
@@ -235,6 +241,10 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
 .score-manual-row{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,2fr) 90px;gap:8px;align-items:start;padding:8px;border-bottom:1px solid var(--stone-700);font-size:0.76rem;}
 .score-manual-row input{width:100%;}
 .score-manual-text{color:var(--parchment-dim);line-height:1.45;}
+.token-move-choice{display:grid;gap:8px;margin-top:12px;}
+.token-move-choice button{width:100%;text-align:left;}
+.market-card-slot.empty-slot{cursor:pointer;}
+.market-card-slot.empty-slot .field-board-empty{border-color:var(--verdigris);}
 </style>
 </head>
 <body>
@@ -298,7 +308,10 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
         <div class="status-title" id="playerStatusTitle">自分のトークン</div>
         <div class="resource-row" id="playerResources"></div>
         <div class="resource-row" id="playerSecondaryResources"></div>
-        <div class="state-control-row" id="playerStateControls"></div>
+        <div class="status-action-grid">
+          <div class="state-control-row" id="playerStateControls"></div>
+          <div class="quick-action-row"><button class="btn small primary" id="btnDrawOne">1枚ドロー</button></div>
+        </div>
       </section>
       <section class="status-panel bot">
         <div class="status-title" id="botStatusTitle">BOTのトークン／アクション</div>
@@ -308,7 +321,10 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
           <button class="btn small primary" id="btnRollBotDie">BOTダイスを振る</button>
           <div class="dice-history" id="botDieHistory">履歴：なし</div>
         </div>
-        <div class="state-control-row" id="botStateControls"></div>
+        <div class="status-action-grid">
+          <div class="state-control-row" id="botStateControls"></div>
+          <div class="quick-action-row"><button class="btn small" id="btnBotDiscardOne">1枚破棄</button></div>
+        </div>
       </section>
     </div>
   </header>
@@ -322,7 +338,7 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
   <div class="section-title player">自分の手札</div>
   <div class="field-board-row" id="playerHandBoard"></div>
 
-  <div class="section-title player">自分の配置領域</div>
+  <div class="section-title player field-section-title"><span>自分の配置領域</span><span class="field-symbol-counts" id="playerFieldSymbols"></span></div>
   <div class="field-board-row" id="playerFieldBoard"></div>
 
   <div class="section-title">市場</div>
@@ -339,7 +355,7 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
   <div class="section-title bot">BOT ActionDeck</div>
   <div class="field-board-row bot" id="botActionDeckBoard"></div>
 
-  <div class="section-title bot">BOTの配置領域</div>
+  <div class="section-title bot field-section-title"><span>BOTの配置領域</span><span class="field-symbol-counts" id="botFieldSymbols"></span></div>
   <div class="field-board-row bot" id="botFieldBoard"></div>
 
   <div class="footer-actions helptext">
@@ -347,11 +363,6 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
   </div>
   </main>
 
-  <aside class="action-reference" aria-label="BOT処理参照表">
-    <h2>BOT処理参照表</h2>
-    <div class="subtitle">ActionPileデータ。ダイスの目に対応しないカードを処理するときに参照します。</div>
-    <div id="botActionReferenceBody"></div>
-  </aside>
   </div>
 </div>
 
@@ -368,6 +379,11 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
 <!-- ===================== CARD DETAIL ===================== -->
 <div class="overlay center hidden" id="cardOverlay">
   <div class="drawer" id="cardDrawer"></div>
+</div>
+
+<!-- ===================== TOKEN MOVE CONFIRM ===================== -->
+<div class="overlay center hidden" id="tokenMoveOverlay">
+  <div class="drawer" id="tokenMoveDrawer"></div>
 </div>
 
 <!-- ===================== SCORE SUMMARY ===================== -->
@@ -496,6 +512,11 @@ function ensureStateDefaults(s){
     if(typeof zone.tokens.material !== "number") zone.tokens.material = 0;
     if(typeof zone.tokens.population !== "number") zone.tokens.population = typeof zone.tokens.populace === "number" ? zone.tokens.populace : 0;
     zone.exhaustedCounter = zone.exhaustedCounter ? 1 : 0;
+    function ensureCardSymbols(card){
+      if(!Array.isArray(card.symbols)) card.symbols = [];
+      (card.garrison || []).forEach(ensureCardSymbols);
+    }
+    (zone.cards || []).forEach(ensureCardSymbols);
   });
   return s;
 }
@@ -553,6 +574,10 @@ function parseVP(raw){
   return isNaN(n) ? raw : n;
 }
 function parseBool(raw){ return String(raw).toUpperCase() === "TRUE"; }
+var SYMBOL_TYPES = ["麦","袋","水","都市","大都市","仮面","兜"];
+function parseSymbols(raw){
+  return String(raw || "").replace(/，/g, ",").split(",").map(function(symbol){ return symbol.trim(); }).filter(function(symbol){ return SYMBOL_TYPES.indexOf(symbol) >= 0; });
+}
 
 function makeCard(row){
   return {
@@ -564,9 +589,11 @@ function makeCard(row){
     cardText: row.cardText || "",
     pinned: parseBool(row.pinned),
     attack: parseBool(row.attack),
+    symbols: parseSymbols(row.symbols),
     cardNo: row.cardNo || "",
     nation: (row.nation && row.nation !== "None") ? row.nation : null,
     initialZone: row.initialZone || "",
+    actionKey: row.actionKey || "",
     progressTokens: 0,
     materialTokens: 0,
     populationTokens: 0,
@@ -726,14 +753,27 @@ function renderBoard(){
   renderSetupButton();
   renderResources();
   renderBotDie();
-  renderBotActionReference();
   renderZoneRow("rowPlayer", "player");
   renderHandBoard();
   renderFieldBoard("playerFieldBoard", "Pl_Field");
+  renderFieldSymbols("playerFieldSymbols", "Pl_Field");
   renderSharedZones();
   renderZoneRow("rowBot", "bot");
   renderBotActionDeck();
   renderFieldBoard("botFieldBoard", "Bot_Field");
+  renderFieldSymbols("botFieldSymbols", "Bot_Field");
+}
+
+function renderFieldSymbols(elementId, zoneId){
+  var counts = {};
+  SYMBOL_TYPES.forEach(function(symbol){ counts[symbol] = 0; });
+  function countCard(card){
+    (card.symbols || []).forEach(function(symbol){ if(Object.prototype.hasOwnProperty.call(counts, symbol)) counts[symbol]++; });
+  }
+  (state.zones[zoneId].cards || []).forEach(countCard);
+  document.getElementById(elementId).innerHTML = SYMBOL_TYPES.map(function(symbol){
+    return '<span>'+escapeHtml(symbol)+' '+counts[symbol]+'</span>';
+  }).join("");
 }
 
 function renderVP(){
@@ -917,44 +957,35 @@ function renderResources(){
       save(); renderResources();
     });
   });
-  document.querySelectorAll("[data-side-state]").forEach(function(btn){
+  document.querySelectorAll("[data-side-toggle]").forEach(function(btn){
     btn.addEventListener("click", function(){
-      var side = btn.getAttribute("data-side");
-      var value = btn.getAttribute("data-side-state");
-      var previous = side === "player" ? state.playerState : state.botActionState;
-      if(previous === value) return;
-      if(side === "player") state.playerState = value;
-      else state.botActionState = value;
-      state.turnHistory.push({turn:state.turn, side:side, from:previous, to:value});
-      save(); renderResources(); renderBotActionReference(); renderTurn();
+      var side = btn.getAttribute("data-side-toggle");
+      var current = side === "player" ? state.playerState : state.botActionState;
+      var value = current === "Barbarian" ? "Empire" : "Barbarian";
+      if(changeCivilisationState(side, value)){
+        save(); renderResources(); renderBotActionDeck(); renderTurn();
+      }
     });
   });
 }
 
+function changeCivilisationState(side, value){
+  var previous = side === "player" ? state.playerState : state.botActionState;
+  if(previous === value) return false;
+  if(side === "player") state.playerState = value;
+  else state.botActionState = value;
+  state.turnHistory.push({turn:state.turn, side:side, from:previous, to:value});
+  return true;
+}
+
 function renderStateButtons(side, active){
-  return '<div class="action-state-tabs" style="width:100%;margin:0;"><button data-side="'+side+'" data-side-state="Barbarian" class="'+(active==="Barbarian"?"on":"")+'">蛮族</button><button data-side="'+side+'" data-side-state="Empire" class="'+(active==="Empire"?"on":"")+'">帝国</button></div>';
+  var label = active === "Empire" ? "帝国" : "蛮族";
+  return '<div class="action-state-tabs" style="width:100%;margin:0;"><button data-side-toggle="'+side+'" class="on" aria-label="蛮族と帝国を切り替える">'+label+'</button></div>';
 }
 
 function renderBotDie(){
   document.getElementById("botDieResult").textContent = state.botDie.last === null ? "—" : state.botDie.last;
   document.getElementById("botDieHistory").textContent = "履歴：" + (state.botDie.history.length ? state.botDie.history.join(" → ") : "なし");
-}
-
-function renderBotActionReference(){
-  var body = document.getElementById("botActionReferenceBody");
-  var active = state.botActionState;
-  var cards = state.botActions.filter(function(c){ return c.state === active; });
-  var html = '';
-  if(cards.length === 0){
-    html += '<div class="empty-note">この状態のActionPileデータはありません</div>';
-  } else {
-    html += '<ul class="bot-action-list">';
-    cards.forEach(function(card){
-      html += '<li><div class="action-name">'+escapeHtml(card.name)+'</div><div class="action-text">'+escapeHtml(card.cardText || "")+'</div></li>';
-    });
-    html += '</ul>';
-  }
-  body.innerHTML = html;
 }
 
 document.getElementById("btnRollBotDie").addEventListener("click", function(){
@@ -963,6 +994,18 @@ document.getElementById("btnRollBotDie").addEventListener("click", function(){
   state.botDie.history.unshift(result);
   state.botDie.history = state.botDie.history.slice(0, 10);
   save(); renderBotDie();
+});
+
+document.getElementById("btnDrawOne").addEventListener("click", function(){
+  var deck = state.zones.Pl_DrawDeck;
+  if(deck.cards.length === 0){ alert("ドローデッキにカードがありません"); return; }
+  applyMove([deck.cards.shift()], "Pl_Hand", false, "Pl_DrawDeck");
+});
+
+document.getElementById("btnBotDiscardOne").addEventListener("click", function(){
+  var deck = state.zones.Bot_DrawDeck;
+  if(deck.cards.length === 0){ alert("ボットデッキにカードがありません"); return; }
+  applyMove([deck.cards.shift()], "Bot_Pile", true, "Bot_DrawDeck");
 });
 
 document.getElementById("btnNewGame").addEventListener("click", function(){
@@ -985,43 +1028,23 @@ function renderZoneRow(elId, owner){
 
 function renderSharedZones(){
   renderZoneIds("rowSharedTop", ["Temp","MainDeck","CivilisedDeck","UncivilisedDeck","RegionDeck"]);
-  renderSharedPublishButtons();
+  document.getElementById("rowSharedPublish").innerHTML = "";
   renderMarketCards();
   renderZoneIds("rowSharedBottom", ["FameDeck","FameFinale","ExilePile","UnrestPile"]);
-}
-
-function renderSharedPublishButtons(){
-  var actions = [
-    ["MainDeck","MainPile1"],
-    ["MainDeck","MainPile2"],
-    ["CivilisedDeck","CivilisedPile"],
-    ["UncivilisedDeck","UncivilisedPile"],
-    ["RegionDeck","RegionPile"],
-    null,
-    null
-  ];
-  var container = document.getElementById("rowSharedPublish");
-  container.innerHTML = actions.map(function(action){
-    if(!action) return '<div class="shared-publish-cell"></div>';
-    var disabled = state.zones[action[0]].cards.length === 0 ? " disabled" : "";
-    return '<div class="shared-publish-cell"><button class="btn primary" data-publish-from="'+action[0]+'" data-publish-to="'+action[1]+'"'+disabled+'>公開</button><span class="arrow">↓</span></div>';
-  }).join("");
-  container.querySelectorAll("[data-publish-from]").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      publishTopCard(btn.getAttribute("data-publish-from"), btn.getAttribute("data-publish-to"));
-    });
-  });
 }
 
 function renderMarketCards(){
   var container = document.getElementById("rowSharedMarket");
   var ids = ["MainPile1","MainPile2","CivilisedPile","UncivilisedPile","RegionPile"];
+  var sources = {MainPile1:"MainDeck", MainPile2:"MainDeck", CivilisedPile:"CivilisedDeck", UncivilisedPile:"UncivilisedDeck", RegionPile:"RegionDeck"};
   container.innerHTML = ids.map(function(zoneId){
     var zone = state.zones[zoneId];
     var card = zone.cards[0];
     var label = escapeHtml(ZONE_DEFS[zoneId].label);
     if(!card){
-      return '<div class="market-card-slot"><div class="market-slot-label">'+label+'</div><div class="field-board-empty">公開カードはありません</div></div>';
+      var sourceId = sources[zoneId];
+      var canAdd = state.zones[sourceId].cards.length > 0;
+      return '<div class="market-card-slot empty-slot" data-market-publish-from="'+sourceId+'" data-market-publish-to="'+zoneId+'"><div class="market-slot-label">'+label+'</div><div class="field-board-empty">'+(canAdd ? 'タップして公開' : '公開できるカードはありません')+'</div></div>';
     }
     return '<div class="market-card-slot"><div class="market-slot-label">'+label+(zone.cards.length > 1 ? '（'+zone.cards.length+'枚）' : '')+'</div>'+
       '<article class="field-card hand-card '+cardTypeClass(card)+'">' +
@@ -1032,6 +1055,14 @@ function renderMarketCards(){
       '<div class="field-card-actions"><button class="btn small" data-market-detail="'+zoneId+'">一覧・トークン</button><button class="btn small primary" data-market-move="'+zoneId+'" data-market-uid="'+card.uid+'">このカードを移動</button></div>' +
       '</article></div>';
   }).join("");
+  container.querySelectorAll("[data-market-publish-from]").forEach(function(el){
+    el.addEventListener("click", function(){
+      var sourceId = el.getAttribute("data-market-publish-from");
+      if(state.zones[sourceId].cards.length === 0) return;
+      var card = state.zones[sourceId].cards.shift();
+      applyMove([card], el.getAttribute("data-market-publish-to"), true, sourceId);
+    });
+  });
   container.querySelectorAll("[data-market-detail]").forEach(function(el){
     el.addEventListener("click", function(){ openZoneDrawer(el.getAttribute("data-market-detail")); });
   });
@@ -1044,18 +1075,10 @@ function renderMarketCards(){
       if(!card) return;
       openDestPicker(function(destId, toTop){
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop);
+        applyMove([card], destId, toTop, zoneId);
       }, zoneId);
     });
   });
-}
-
-function publishTopCard(sourceId, destinationId){
-  var source = state.zones[sourceId];
-  var destination = state.zones[destinationId];
-  if(!source || !destination || source.cards.length === 0) return;
-  destination.cards.unshift(source.cards.shift());
-  save(); renderBoard();
 }
 
 function renderZoneIds(elId, ids){
@@ -1121,7 +1144,7 @@ function renderFieldBoard(containerId, zoneId){
       if(!card) return;
       openDestPicker(function(destId, toTop){
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop);
+        applyMove([card], destId, toTop, zoneId);
       }, zoneId);
     });
   });
@@ -1149,7 +1172,7 @@ function renderHandBoard(){
       if(!card) return;
       openDestPicker(function(destId, toTop){
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop);
+        applyMove([card], destId, toTop, "Pl_Hand");
       }, "Pl_Hand");
     });
   });
@@ -1175,6 +1198,7 @@ function renderBotActionDeck(){
       '<div class="card-meta">'+cardMetaLine(card)+'</div>' +
       cardTokenBadges(card) +
       '<div class="hand-card-text">'+escapeHtml(card.cardText || "")+'</div>' +
+      renderBotActionForCard(card) +
       '<div class="field-card-actions"><button class="btn small" data-action-reveal="'+card.uid+'">非公開に戻す</button><button class="btn small primary" data-action-move="'+card.uid+'">このカードを移動</button></div>' +
       '</article>';
   }).join("");
@@ -1194,10 +1218,48 @@ function renderBotActionDeck(){
       if(!card) return;
       openDestPicker(function(destId, toTop){
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop);
+        applyMove([card], destId, toTop, "Bot_ActionDeck");
       }, "Bot_ActionDeck");
     });
   });
+}
+
+function normalizeActionKey(value){
+  return String(value || "").trim().toLowerCase();
+}
+
+function cardMatchesActionKey(card, actionKey){
+  var key = normalizeActionKey(actionKey);
+  if(!key || key === "etc") return false;
+  if(key === "pinned") return !!card.pinned;
+  if(key === "attack") return !!card.attack;
+  if(card.type && normalizeActionKey(card.type) === key) return true;
+  if(card.state && normalizeActionKey(card.state) === key) return true;
+  return normalizeActionKey(card.name) === key;
+}
+
+function botActionResultHtml(action, label, isFallback){
+  if(!action) return "";
+  return '<div class="bot-action-result'+(isFallback?' fallback':'')+'">' +
+    '<div class="result-label">'+escapeHtml(label)+'</div>' +
+    '<div class="result-name">'+escapeHtml(action.name)+' <span class="card-meta">'+escapeHtml(action.actionKey || "")+'</span></div>' +
+    '<div class="result-text">'+escapeHtml(action.cardText || "")+'</div>' +
+    '</div>';
+}
+
+function renderBotActionForCard(card){
+  var actions = state.botActions.filter(function(action){
+    return action.type === "Action" && action.state === state.botActionState;
+  });
+  var fallback = actions.find(function(action){ return normalizeActionKey(action.actionKey) === "etc"; });
+  var matched = actions.find(function(action){ return cardMatchesActionKey(card, action.actionKey); });
+  if(!matched && !fallback){
+    return '<div class="bot-action-result fallback"><div class="result-label">BOTアクション</div><div class="result-text">現在の状態にactionKeyが設定された処理はありません。</div></div>';
+  }
+  if(matched){
+    return botActionResultHtml(matched, "このカードに一致するBOTアクション", false);
+  }
+  return botActionResultHtml(fallback, "一致なし：それ以外（etc）", false);
 }
 
 function cardTokenBadges(card){
@@ -1230,6 +1292,7 @@ function closeZoneDrawer(){
   zoneOverlay.classList.add("hidden");
   currentZoneId = null;
   selection = {};
+  renderBoard();
 }
 zoneOverlay.addEventListener("click", function(e){ if(e.target === zoneOverlay) closeZoneDrawer(); });
 
@@ -1452,7 +1515,7 @@ function wireZoneDrawerEvents(def, zone){
       if(zone.cards.length === 0){ alert("デッキにカードがありません"); return; }
       openDestPicker(function(destId, toTop){
         var moving = zone.cards.splice(0, n);
-        applyMove(moving, destId, toTop);
+        applyMove(moving, destId, toTop, currentZoneId);
         closeZoneDrawer();
       });
     });
@@ -1473,7 +1536,7 @@ function wireZoneDrawerEvents(def, zone){
         if(uids.indexOf(c.uid) >= 0){ moving.push(c); return false; }
         return true;
       });
-      applyMove(moving, destId, toTop);
+      applyMove(moving, destId, toTop, currentZoneId);
       closeZoneDrawer();
     });
   });
@@ -1602,27 +1665,103 @@ function doSearch(deckZone, type){
   alert('"'+card.name+'" をテンポラリへ移動しました');
 }
 
-function applyMove(cards, destId, toTop){
-  var dest = state.zones[destId];
-  var separatedCards = [];
-  function separateGarrison(card){
-    var garrison = (card.garrison || []).slice();
-    card.garrison = [];
-    separatedCards.push(card);
-    garrison.forEach(separateGarrison);
+var tokenMoveOverlay = document.getElementById("tokenMoveOverlay");
+var tokenMoveDrawer = document.getElementById("tokenMoveDrawer");
+
+function cardsWithTokens(cards){
+  var tokenCards = [];
+  function inspect(card){
+    if(card.progressTokens || card.materialTokens || card.populationTokens) tokenCards.push(card);
+    (card.garrison || []).forEach(inspect);
   }
-  cards.forEach(separateGarrison);
-  cards = separatedCards;
-  if(destId === "Bot_ActionDeck"){
-    cards.forEach(function(card){ card.actionRevealed = false; });
+  cards.forEach(inspect);
+  return tokenCards;
+}
+
+function resolveMoveTokens(cards, sourceId, done){
+  var tokenCards = cardsWithTokens(cards);
+  var sourceTokens = sourceId && state.zones[sourceId] ? state.zones[sourceId].tokens : null;
+  var hasSourceTokens = sourceTokens && (sourceTokens.progress || sourceTokens.material || sourceTokens.population);
+  if(tokenCards.length === 0 && !hasSourceTokens){ done(true); return; }
+  var totals = {progress:0, material:0, population:0};
+  tokenCards.forEach(function(card){
+    totals.progress += card.progressTokens || 0;
+    totals.material += card.materialTokens || 0;
+    totals.population += card.populationTokens || 0;
+  });
+  if(hasSourceTokens){
+    totals.progress += sourceTokens.progress || 0;
+    totals.material += sourceTokens.material || 0;
+    totals.population += sourceTokens.population || 0;
   }
-  if(toTop){
-    dest.cards = cards.concat(dest.cards);
-  } else {
-    dest.cards = dest.cards.concat(cards);
-  }
-  save();
-  renderBoard();
+  var html = '<div class="drawer-header"><h2>カード上のトークン</h2></div>'+
+    '<p class="helptext">移動するカードにトークンがあります。移動前に扱いを選んでください。</p>'+
+    '<div class="token-box"><span>進歩 '+totals.progress+' ／ 物資 '+totals.material+' ／ 人口 '+totals.population+'</span></div>'+
+    '<div class="token-move-choice">'+
+    '<button class="btn primary" data-token-destination="player">プレイヤーにトークンを加える</button>'+
+    '<button class="btn primary" data-token-destination="bot">BOTにトークンを加える</button>'+
+    '<button class="btn" data-token-destination="discard">破棄する</button>'+
+    '<button class="btn danger" data-token-destination="cancel">キャンセル</button></div>';
+  tokenMoveDrawer.innerHTML = html;
+  tokenMoveOverlay.classList.remove("hidden");
+  tokenMoveDrawer.querySelectorAll("[data-token-destination]").forEach(function(button){
+    button.addEventListener("click", function(){
+      var destination = button.getAttribute("data-token-destination");
+      tokenMoveOverlay.classList.add("hidden");
+      if(destination === "cancel"){ done(false); return; }
+      if(destination === "player" || destination === "bot"){
+        state.resources[destination].progress += totals.progress;
+        state.resources[destination].material += totals.material;
+        state.resources[destination].population += totals.population;
+      }
+      tokenCards.forEach(function(card){
+        card.progressTokens = 0;
+        card.materialTokens = 0;
+        card.populationTokens = 0;
+      });
+      if(hasSourceTokens){
+        sourceTokens.progress = 0;
+        sourceTokens.material = 0;
+        sourceTokens.population = 0;
+      }
+      done(true);
+    });
+  });
+}
+
+function applyMove(cards, destId, toTop, sourceId){
+  var originalCards = cards.slice();
+  resolveMoveTokens(originalCards, sourceId, function(confirmed){
+    if(!confirmed){
+      if(sourceId && state.zones[sourceId]) state.zones[sourceId].cards = originalCards.concat(state.zones[sourceId].cards);
+      save(); renderBoard();
+      return;
+    }
+    var dest = state.zones[destId];
+    var separatedCards = [];
+    function separateGarrison(card){
+      var garrison = (card.garrison || []).slice();
+      card.garrison = [];
+      separatedCards.push(card);
+      garrison.forEach(separateGarrison);
+    }
+    originalCards.forEach(separateGarrison);
+    if(destId === "Bot_ActionDeck") separatedCards.forEach(function(card){ card.actionRevealed = false; });
+    if(toTop) dest.cards = separatedCards.concat(dest.cards);
+    else dest.cards = dest.cards.concat(separatedCards);
+
+    var evolved = [];
+    separatedCards.forEach(function(card){
+      var side = destId === "Pl_Pile" ? "player" : (destId === "Bot_Pile" ? "bot" : null);
+      if(side && card.type === "Accession" && changeCivilisationState(side, "Empire")) evolved.push(side);
+    });
+    save();
+    renderBoard();
+    if(evolved.length){
+      var names = evolved.map(function(side){ return side === "player" ? (state.playerNation || "プレイヤー") : (state.botNation || "BOT"); });
+      alert(names.join("・") + "は帝国に進化しました");
+    }
+  });
 }
 
 function toggleCardExhausted(zoneId, card){
@@ -1690,13 +1829,22 @@ function openCardDetail(zoneId, uid){
   var card = zone.cards.find(function(c){ return c.uid === uid; });
   if(!card) return;
   var selectingGarrison = false;
+  var draftTokens = {
+    progressTokens: card.progressTokens || 0,
+    materialTokens: card.materialTokens || 0,
+    populationTokens: card.populationTokens || 0
+  };
+  function commitDraftTokens(){
+    ["progressTokens","materialTokens","populationTokens"].forEach(function(k){ card[k] = draftTokens[k]; });
+    save(); renderBoard();
+  }
   function render(){
     var html = '<div class="drawer-header"><h2>'+escapeHtml(card.name)+'</h2><button class="close" id="cdClose">✕</button></div>';
     html += '<div class="card-meta" style="margin-bottom:10px;">'+cardMetaLine(card)+'</div>';
     if(card.cardText) html += '<div class="card-text" style="margin-bottom:12px;">'+escapeHtml(card.cardText)+'</div>';
     ["progressTokens","materialTokens","populationTokens"].forEach(function(k){
       var label = k==="progressTokens"?"進歩トークン":(k==="materialTokens"?"物資トークン":"人口トークン");
-      html += '<div class="token-box" style="margin-bottom:8px;"><span>'+label+'</span><button data-c-minus="'+k+'">−</button><span class="n">'+card[k]+'</span><button data-c-plus="'+k+'">＋</button></div>';
+      html += '<div class="token-box" style="margin-bottom:8px;"><span>'+label+'</span><button data-c-minus="'+k+'">−</button><span class="n">'+draftTokens[k]+'</span><button data-c-plus="'+k+'">＋</button></div>';
     });
     html += '<div class="token-box" style="margin-bottom:8px;"><span>消耗</span><button id="cdExhaust">'+(card.exhausted?"解除する":"消耗させる")+'</button></div>';
     if(zoneId === "Pl_Field"){
@@ -1716,16 +1864,22 @@ function openCardDetail(zoneId, uid){
         html += '</div>';
       }
     }
+    html += '<button class="btn small" id="cdDiscardTokenChanges" style="margin-top:10px;">トークン変更を破棄</button>';
     cardDrawer.innerHTML = html;
     document.getElementById("cdClose").addEventListener("click", function(){
+      commitDraftTokens();
       cardOverlay.classList.add("hidden");
       if(currentZoneId) renderZoneDrawer();
     });
     cardDrawer.querySelectorAll("[data-c-minus]").forEach(function(el){
-      el.addEventListener("click", function(){ var k = el.getAttribute("data-c-minus"); card[k] = Math.max(0, card[k]-1); save(); render(); renderBoard(); });
+      el.addEventListener("click", function(){ var k = el.getAttribute("data-c-minus"); draftTokens[k] = Math.max(0, draftTokens[k]-1); render(); });
     });
     cardDrawer.querySelectorAll("[data-c-plus]").forEach(function(el){
-      el.addEventListener("click", function(){ var k = el.getAttribute("data-c-plus"); card[k]++; save(); render(); renderBoard(); });
+      el.addEventListener("click", function(){ var k = el.getAttribute("data-c-plus"); draftTokens[k]++; render(); });
+    });
+    document.getElementById("cdDiscardTokenChanges").addEventListener("click", function(){
+      cardOverlay.classList.add("hidden");
+      if(currentZoneId) renderZoneDrawer();
     });
     document.getElementById("cdExhaust").addEventListener("click", function(){
       if(toggleCardExhausted(zoneId, card)){ save(); render(); renderBoard(); }
