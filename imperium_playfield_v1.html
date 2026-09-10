@@ -66,15 +66,17 @@ header.top h1{font-size:1rem;flex:1;min-width:140px;}
 .vp-pill .k{font-size:0.6rem;color:var(--parchment-faint);}
 .vp-pill .v{font-family:var(--serif);font-size:1.15rem;color:var(--gold);}
 .vp-pill button{border:none;background:none;color:var(--parchment-faint);font-size:0.85rem;padding:0 4px;}
-.status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
-.status-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:10px;}
+.status-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;}
+.status-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:10px;display:grid;align-items:stretch;gap:7px;}
+.status-panel.player{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(300px,2.2fr);}
+.status-panel.bot{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(100px,0.8fr) minmax(230px,1.8fr);}
 .status-panel.player{border-left:3px solid var(--verdigris);}
 .status-panel.bot{border-left:3px solid var(--oxblood);}
 .status-panel.state-barbarian{border-left-color:#b95850;background:linear-gradient(90deg,rgba(185,88,80,0.16),rgba(42,40,37,0.96));}
 .status-panel.state-empire{border-left-color:#5f91c9;background:linear-gradient(90deg,rgba(95,145,201,0.16),rgba(42,40,37,0.96));}
 .status-title{font-family:var(--serif);font-size:0.85rem;margin-bottom:8px;color:var(--parchment-dim);}
 header.top .status-panel{padding:6px 8px;}
-header.top .status-title{font-size:0.72rem;margin-bottom:5px;}
+header.top .status-title{font-size:0.72rem;margin:0;display:flex;align-items:center;}
 header.top .resource-row{gap:4px;}
 header.top .resource-row+.resource-row{margin-top:4px;}
 header.top .resource-box{display:grid;grid-template-columns:22px minmax(18px,1fr) 22px;gap:3px;padding:4px 5px;min-width:100px;justify-items:center;}
@@ -84,7 +86,7 @@ header.top .resource-box .n{align-self:center;min-width:18px;}
 header.top .state-control-row{margin-top:4px;}
 header.top .action-state-tabs{margin-bottom:0;gap:5px;}
 header.top .action-state-tabs button{padding:5px;}
-header.top .dice-row{margin-top:5px;}
+header.top .dice-row{margin:0;justify-content:center;}
 header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .turn-history{margin:10px 16px 0;background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:9px 11px;}
 .turn-history-title{font-family:var(--serif);font-size:0.78rem;color:var(--parchment-dim);margin-bottom:5px;}
@@ -111,7 +113,7 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .status-action-grid.player-actions .resource-box{height:100%;}
 .board-layout{max-width:1800px;margin:0 auto;}
 .board-main{min-width:0;}
-@media(max-width:650px){.status-grid{grid-template-columns:1fr;}.status-panel{padding:9px;}}
+@media(max-width:650px){.status-panel{padding:9px;display:block;}.status-title{margin-bottom:5px!important;}.status-action-grid{margin-top:5px;}.dice-row{margin-top:5px!important;}}
 
 /* ---------- board sections ---------- */
 .section-title{font-size:0.68rem;letter-spacing:0.05em;color:var(--parchment-faint);margin:16px 16px 6px;}
@@ -268,6 +270,9 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
   header.top .resource-box{display:grid;grid-template-columns:44px minmax(18px,1fr) 44px;gap:3px;min-width:110px;padding:4px;justify-items:center;}
   header.top .resource-box>span:first-child{grid-column:1/-1;width:100%;text-align:center;white-space:nowrap;font-size:0.68rem;line-height:1.2;}
   header.top .resource-box button{width:44px;height:44px;min-width:44px;font-size:1.1rem;flex-basis:44px;}
+  header.top .status-panel.player{grid-template-columns:68px minmax(340px,3fr) minmax(220px,2fr);}
+  header.top .status-panel.bot{grid-template-columns:68px minmax(340px,3fr) 54px minmax(180px,1.7fr);}
+  header.top .dice-history{display:none;}
   .deck-actions .n-input .step-btn{width:46px;height:46px;font-size:1.2rem;}
   .drawer-header .close{min-width:48px;min-height:48px;padding:8px;}
   .vp-pill button{min-width:40px;min-height:40px;font-size:1.05rem;}
