@@ -70,6 +70,8 @@ header.top h1{font-size:1rem;flex:1;min-width:140px;}
 .status-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:10px;}
 .status-panel.player{border-left:3px solid var(--verdigris);}
 .status-panel.bot{border-left:3px solid var(--oxblood);}
+.status-panel.state-barbarian{border-left-color:#b95850;background:linear-gradient(90deg,rgba(185,88,80,0.16),rgba(42,40,37,0.96));}
+.status-panel.state-empire{border-left-color:#5f91c9;background:linear-gradient(90deg,rgba(95,145,201,0.16),rgba(42,40,37,0.96));}
 .status-title{font-family:var(--serif);font-size:0.85rem;margin-bottom:8px;color:var(--parchment-dim);}
 header.top .status-panel{padding:6px 8px;}
 header.top .status-title{font-size:0.72rem;margin-bottom:5px;}
@@ -140,7 +142,6 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 #playerHandBoard{flex-wrap:wrap;overflow-x:visible;}
 #playerHandBoard .field-card{flex:1 1 200px;min-width:180px;max-width:320px;}
 .field-card{flex:0 0 220px;background:var(--stone-800);border:1px solid var(--stone-600);border-top:3px solid var(--verdigris);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:7px;}
-.field-board-row.bot .field-card{border-top-color:var(--oxblood);}
 .field-card.hand-card{border-top-color:var(--gold);}
 .field-card.action-deck-card{border-top-color:var(--oxblood);}
 .field-card.action-deck-card.concealed{min-height:150px;background:repeating-linear-gradient(135deg,var(--stone-800),var(--stone-800) 10px,var(--stone-750) 10px,var(--stone-750) 20px);}
@@ -158,6 +159,7 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .field-card.card-type-fame{border-top-color:#a877c8;background:rgba(168,119,200,0.08);}
 .field-card.card-type-uncivilised{border-top-color:#679b69;background:rgba(103,155,105,0.08);}
 .field-card.card-type-unrest{border-top-color:#bd5b55;background:rgba(189,91,85,0.09);}
+.field-card.card-type-neutral{border-top-color:#8c877c;background:#2d2b28;}
 .field-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
 .field-card-name{font-family:var(--serif);font-size:0.95rem;line-height:1.25;}
 .field-card-status{font-size:0.67rem;color:var(--parchment-faint);}
@@ -174,6 +176,10 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .field-card-actions{display:flex;gap:7px;margin-top:auto;}
 .field-card-actions button{flex:1;}
 .field-board-empty{color:var(--parchment-faint);font-size:0.82rem;padding:25px 6px;text-align:center;width:100%;border:1px dashed var(--stone-700);border-radius:6px;}
+.bot-field-pile{width:132px;min-height:86px;background:var(--stone-800);border:1px solid var(--stone-600);border-top:3px solid #d6b84c;border-radius:6px;color:var(--parchment);padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;}
+.bot-field-pile .pile-label{font-size:0.7rem;color:var(--parchment-dim);}
+.bot-field-pile .pile-count{font-family:var(--serif);font-size:1.15rem;color:#d6b84c;}
+.bot-field-pile .pile-help{font-size:0.62rem;color:var(--parchment-faint);}
 
 /* ---------- drawer / modal ---------- */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:40;display:flex;align-items:flex-end;justify-content:center;}
@@ -217,13 +223,14 @@ ul.card-list li.card-type-tributary{border-left:4px solid #5f91c9;background:rgb
 ul.card-list li.card-type-fame{border-left:4px solid #a877c8;background:rgba(168,119,200,0.07);}
 ul.card-list li.card-type-uncivilised{border-left:4px solid #679b69;background:rgba(103,155,105,0.07);}
 ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(189,91,85,0.08);}
+ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#272522;}
 
 .action-bar{position:sticky;bottom:-20px;background:var(--stone-850);padding:10px 0 0;margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--stone-700);}
 
 .dest-group{margin-bottom:14px;}
 .dest-group h3{font-size:0.7rem;color:var(--parchment-faint);margin-bottom:6px;}
-.dest-list{display:flex;flex-wrap:wrap;gap:8px;}
-.dest-list button{background:var(--stone-800);border:1px solid var(--stone-600);color:var(--parchment);padding:8px 10px;border-radius:5px;font-size:0.8rem;}
+.dest-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;}
+.dest-list button{background:var(--stone-800);border:1px solid var(--stone-600);color:var(--parchment);padding:12px 12px;border-radius:6px;font-size:0.8rem;min-height:48px;text-align:left;line-height:1.35;}
 .dest-list button .c{color:var(--parchment-faint);font-size:0.68rem;}
 .dest-toggle{display:flex;gap:8px;margin:12px 0;}
 .dest-toggle button{flex:1;padding:8px;border-radius:4px;border:1px solid var(--stone-600);background:var(--stone-900);color:var(--parchment-dim);}
@@ -243,8 +250,30 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
 .score-manual-text{color:var(--parchment-dim);line-height:1.45;}
 .token-move-choice{display:grid;gap:8px;margin-top:12px;}
 .token-move-choice button{width:100%;text-align:left;}
+.turn-action-choice{display:grid;gap:10px;margin-top:14px;}
+.turn-action-choice button{min-height:52px;text-align:left;}
+.turn-action-choice strong{display:block;margin-bottom:3px;}
+.turn-action-choice span{font-size:0.72rem;color:var(--parchment-dim);}
 .market-card-slot.empty-slot{cursor:pointer;}
 .market-card-slot.empty-slot .field-board-empty{border-color:var(--verdigris);}
+@media (pointer:coarse), (max-width:820px){
+  button.btn,button.btn.small{min-height:48px;padding:11px 12px;}
+  .resource-box button,.token-box button{width:46px;height:46px;font-size:1.15rem;flex:0 0 46px;}
+  header.top .resource-box button{width:44px;height:44px;min-width:44px;font-size:1.1rem;flex-basis:44px;}
+  .deck-actions .n-input .step-btn{width:46px;height:46px;font-size:1.2rem;}
+  .drawer-header .close{min-width:48px;min-height:48px;padding:8px;}
+  .vp-pill button{min-width:40px;min-height:40px;font-size:1.05rem;}
+  .card-detail-btn{min-width:48px;min-height:48px;font-size:1.2rem;}
+  .field-card-actions{gap:9px;}
+  .field-card-actions button{min-height:48px;}
+  .dest-toggle button{min-height:48px;padding:11px;}
+  .dest-list{gap:10px;}
+  .dest-list button{min-height:54px;padding:14px 12px;font-size:0.86rem;}
+  .action-bar button{min-height:48px;}
+}
+@media (max-width:520px){
+  .dest-list{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
 </style>
 </head>
 <body>
@@ -289,7 +318,7 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
     <h1>IMPERIUM <span id="matchLabel" style="color:var(--parchment-faint);font-size:0.75rem;"></span></h1>
     <div class="vp-pill">
       <div class="k">ターン</div>
-      <div class="v"><button id="turnMinus">−</button><span id="turnVal">1</span><button id="turnPlus">＋</button></div>
+      <div class="v"><button id="turnMinus">−</button><span id="turnVal">0</span><button id="turnPlus">＋</button></div>
     </div>
     <div class="vp-pill">
       <div class="k">自分 VP</div>
@@ -299,6 +328,7 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
       <div class="k">BOT VP</div>
       <div class="v"><button id="bvpMinus">−</button><span id="bvpVal">0</span><button id="bvpPlus">＋</button></div>
     </div>
+    <button class="btn small primary" id="btnStartTurn">プレイヤーのターン</button>
     <button class="btn small primary" id="btnInitialSetup">初期セットアップ</button>
     <button class="btn small" id="btnScore">集計</button>
     <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
@@ -318,7 +348,6 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
         <div class="resource-row" id="botResources"></div>
         <div class="dice-row">
           <div class="dice-result" id="botDieResult">—</div>
-          <button class="btn small primary" id="btnRollBotDie">BOTダイスを振る</button>
           <div class="dice-history" id="botDieHistory">履歴：なし</div>
         </div>
         <div class="status-action-grid">
@@ -343,10 +372,10 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
 
   <div class="section-title">市場</div>
   <div class="shared-board-scroll">
+    <div class="shared-zone-row shared-special-row" id="rowSharedBottom"></div>
     <div class="shared-zone-row" id="rowSharedTop"></div>
     <div class="shared-publish-row" id="rowSharedPublish"></div>
     <div class="market-card-row" id="rowSharedMarket"></div>
-    <div class="shared-zone-row shared-special-row" id="rowSharedBottom"></div>
   </div>
 
   <div class="section-title bot" id="labelBotSection">BOT</div>
@@ -354,9 +383,6 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
 
   <div class="section-title bot">BOT ActionDeck</div>
   <div class="field-board-row bot" id="botActionDeckBoard"></div>
-
-  <div class="section-title bot field-section-title"><span>BOTの配置領域</span><span class="field-symbol-counts" id="botFieldSymbols"></span></div>
-  <div class="field-board-row bot" id="botFieldBoard"></div>
 
   <div class="footer-actions helptext">
     データは端末内（このブラウザ）に自動保存されます。CSVを読み込み直す必要はありません。
@@ -391,6 +417,11 @@ ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(1
   <div class="drawer score-drawer" id="scoreDrawer"></div>
 </div>
 
+<!-- ===================== TURN START ===================== -->
+<div class="overlay center hidden" id="turnStartOverlay">
+  <div class="drawer" id="turnStartDrawer"></div>
+</div>
+
 <script>
 (function(){
 "use strict";
@@ -421,7 +452,7 @@ var SHARED_ZONES = [
   ["MainDeck","メインデッキ","deck"],
   ["MainPile1","公開メインデッキ1","pile"],
   ["MainPile2","公開メインデッキ2","pile"],
-  ["FameDeck","栄光デッキ","deck"],
+  ["FameDeck","名声デッキ","deck"],
   ["FameFinale","王の中の王","pile"],
   ["UnrestPile","不穏パイル","pile"],
   ["ExilePile","追放パイル","pile"]
@@ -436,6 +467,8 @@ function buildZoneDefs(){
   defs["Bot_NationDeck"].hiddenFromBoard = true;
   defs["Bot_DevelopDeck"].hiddenFromBoard = true;
   defs["Bot_Accession"].hiddenFromBoard = true;
+  defs["Bot_Power"].hiddenFromBoard = true;
+  defs["Pl_Accession"].hiddenFromBoard = true;
   defs["Bot_DrawDeck"].label = "ボットデッキ";
   defs["Bot_DynastyDeck"] = {id:"Bot_DynastyDeck", label:"王朝デッキ", owner:"bot", type:"deck"};
   defs["Pl_Hand"] = {id:"Pl_Hand", label:"手札", owner:"player", type:"pile"};
@@ -473,7 +506,7 @@ function freshState(playerNation, botNation){
     botActions: [],
     setupCompleted: false,
     playerState: "Barbarian",
-    turn: 1,
+    turn: 0,
     turnHistory: [],
     scoringManual: {}
   };
@@ -502,7 +535,7 @@ function ensureStateDefaults(s){
   }
   if(typeof s.setupCompleted !== "boolean") s.setupCompleted = false;
   if(s.playerState !== "Barbarian" && s.playerState !== "Empire") s.playerState = "Barbarian";
-  if(typeof s.turn !== "number" || s.turn < 1) s.turn = 1;
+  if(typeof s.turn !== "number" || s.turn < 0) s.turn = 0;
   if(!Array.isArray(s.turnHistory)) s.turnHistory = [];
   if(!s.scoringManual || typeof s.scoringManual !== "object") s.scoringManual = {};
   Object.keys(s.zones || {}).forEach(function(id){
@@ -760,20 +793,31 @@ function renderBoard(){
   renderSharedZones();
   renderZoneRow("rowBot", "bot");
   renderBotActionDeck();
-  renderFieldBoard("botFieldBoard", "Bot_Field");
-  renderFieldSymbols("botFieldSymbols", "Bot_Field");
 }
 
 function renderFieldSymbols(elementId, zoneId){
   var counts = {};
   SYMBOL_TYPES.forEach(function(symbol){ counts[symbol] = 0; });
+  var regionCount = 0;
   function countCard(card){
+    if(card.type === "Region") regionCount++;
     (card.symbols || []).forEach(function(symbol){ if(Object.prototype.hasOwnProperty.call(counts, symbol)) counts[symbol]++; });
   }
   (state.zones[zoneId].cards || []).forEach(countCard);
-  document.getElementById(elementId).innerHTML = SYMBOL_TYPES.map(function(symbol){
+  document.getElementById(elementId).innerHTML = '<span>領地 '+regionCount+'</span>' + SYMBOL_TYPES.map(function(symbol){
     return '<span>'+escapeHtml(symbol)+' '+counts[symbol]+'</span>';
   }).join("");
+}
+
+function renderBotFieldPile(){
+  var container = document.getElementById("rowBot");
+  var zone = state.zones.Bot_Field;
+  var regionCount = (zone.cards || []).length;
+  var button = document.createElement("button");
+  button.className = "bot-field-pile";
+  button.innerHTML = '<span class="pile-label">配置領域</span><span class="pile-count">領地 '+regionCount+'枚</span><span class="pile-help">タップして確認</span>';
+  button.addEventListener("click", function(){ openZoneDrawer("Bot_Field"); });
+  container.appendChild(button);
 }
 
 function renderVP(){
@@ -782,7 +826,7 @@ function renderVP(){
 }
 function renderTurn(){
   document.getElementById("turnVal").textContent = state.turn;
-  document.getElementById("turnMinus").disabled = state.turn <= 1;
+  document.getElementById("turnMinus").disabled = state.turn <= 0;
   var list = document.getElementById("turnHistoryList");
   if(!list) return;
   if(state.turnHistory.length === 0){
@@ -796,7 +840,7 @@ function renderTurn(){
     return '<span class="turn-history-entry">T'+entry.turn+' '+escapeHtml(side)+'：'+from+' → '+to+'</span>';
   }).join("");
 }
-document.getElementById("turnMinus").addEventListener("click", function(){ state.turn = Math.max(1, state.turn-1); save(); renderTurn(); });
+document.getElementById("turnMinus").addEventListener("click", function(){ state.turn = Math.max(0, state.turn-1); save(); renderTurn(); });
 document.getElementById("turnPlus").addEventListener("click", function(){ state.turn++; save(); renderTurn(); });
 document.getElementById("pvpMinus").addEventListener("click", function(){ state.vp.player--; save(); renderVP(); });
 document.getElementById("pvpPlus").addEventListener("click", function(){ state.vp.player++; save(); renderVP(); });
@@ -943,11 +987,17 @@ function renderResources(){
       return '<div class="resource-box"><span>'+labels[k]+'</span><button data-resource-side="'+side+'" data-resource-key="'+k+'" data-resource-delta="-1">−</button><span class="n">'+state.resources[side][k]+'</span><button data-resource-side="'+side+'" data-resource-key="'+k+'" data-resource-delta="1">＋</button></div>';
     }).join("");
   }
-  document.getElementById("playerResources").innerHTML = resourceBoxes("player", ["progress","material","population"]);
+  document.getElementById("playerResources").innerHTML = resourceBoxes("player", ["progress","population","material"]);
   document.getElementById("playerSecondaryResources").innerHTML = resourceBoxes("player", ["action","exhaustion"]);
-  document.getElementById("botResources").innerHTML = resourceBoxes("bot", ["progress","material","population"]);
+  document.getElementById("botResources").innerHTML = resourceBoxes("bot", ["progress","population","material"]);
   document.getElementById("playerStateControls").innerHTML = renderStateButtons("player", state.playerState);
   document.getElementById("botStateControls").innerHTML = renderStateButtons("bot", state.botActionState);
+  var playerPanel = document.querySelector(".status-panel.player");
+  var botPanel = document.querySelector(".status-panel.bot");
+  playerPanel.classList.toggle("state-barbarian", state.playerState === "Barbarian");
+  playerPanel.classList.toggle("state-empire", state.playerState === "Empire");
+  botPanel.classList.toggle("state-barbarian", state.botActionState === "Barbarian");
+  botPanel.classList.toggle("state-empire", state.botActionState === "Empire");
   document.querySelectorAll("[data-resource-delta]").forEach(function(btn){
     btn.addEventListener("click", function(){
       var side = btn.getAttribute("data-resource-side");
@@ -988,12 +1038,62 @@ function renderBotDie(){
   document.getElementById("botDieHistory").textContent = "履歴：" + (state.botDie.history.length ? state.botDie.history.join(" → ") : "なし");
 }
 
-document.getElementById("btnRollBotDie").addEventListener("click", function(){
+function rollBotDie(){
   var result = Math.floor(Math.random()*6)+1;
   state.botDie.last = result;
   state.botDie.history.unshift(result);
   state.botDie.history = state.botDie.history.slice(0, 10);
-  save(); renderBotDie();
+  return result;
+}
+
+var turnStartOverlay = document.getElementById("turnStartOverlay");
+var turnStartDrawer = document.getElementById("turnStartDrawer");
+
+function openTurnActionDialog(){
+  turnStartDrawer.innerHTML = '<div class="drawer-header"><h2>ターン'+state.turn+'：プレイヤー行動</h2></div>' +
+    '<p class="helptext">このターンに行う行動を選択してください。BOTダイスは '+state.botDie.last+' です。</p>' +
+    '<div class="turn-action-choice">' +
+    '<button class="btn primary" data-turn-action="activate"><strong>発動</strong><span>アクショントークンを3にする</span></button>' +
+    '<button class="btn" data-turn-action="innovate"><strong>革新</strong><span>アクショントークンを0にし、手札をすべて捨てる</span></button>' +
+    '<button class="btn" data-turn-action="revolt"><strong>反乱</strong><span>アクショントークンを0にし、手札の不穏をすべて戻す</span></button>' +
+    '</div>';
+  turnStartOverlay.classList.remove("hidden");
+  turnStartDrawer.querySelectorAll("[data-turn-action]").forEach(function(button){
+    button.addEventListener("click", function(){ resolveTurnAction(button.getAttribute("data-turn-action")); });
+  });
+}
+
+function resolveTurnAction(action){
+  turnStartOverlay.classList.add("hidden");
+  if(action === "activate"){
+    state.resources.player.action = 3;
+    save(); renderResources();
+    return;
+  }
+  state.resources.player.action = 0;
+  var hand = state.zones.Pl_Hand;
+  var moving = [];
+  if(action === "innovate"){
+    moving = hand.cards.slice();
+    hand.cards = [];
+    if(moving.length) applyMove(moving, "Pl_Pile", false, "Pl_Hand");
+  } else {
+    hand.cards = hand.cards.filter(function(card){
+      if(card.type === "Unrest"){ moving.push(card); return false; }
+      return true;
+    });
+    if(moving.length) applyMove(moving, "UnrestPile", true, "Pl_Hand");
+  }
+  if(!moving.length){ save(); renderBoard(); }
+}
+
+document.getElementById("btnStartTurn").addEventListener("click", function(){
+  state.turn++;
+  rollBotDie();
+  save();
+  renderTurn();
+  renderBotDie();
+  openTurnActionDialog();
 });
 
 document.getElementById("btnDrawOne").addEventListener("click", function(){
@@ -1017,13 +1117,14 @@ document.getElementById("btnNewGame").addEventListener("click", function(){
 function renderZoneRow(elId, owner){
   var ids;
   if(owner === "bot"){
-    ids = ["Bot_DynastyDeck","Bot_DrawDeck","Bot_Pile","Bot_History","Bot_Power","Bot_Field"];
+    ids = ["Bot_DynastyDeck","Bot_DrawDeck","Bot_Pile","Bot_History"];
   } else {
     ids = Object.keys(ZONE_DEFS).filter(function(id){
-      return ZONE_DEFS[id].owner === owner && id !== "Pl_Hand" && id !== "Bot_ActionDeck" && !ZONE_DEFS[id].hiddenFromBoard;
+      return ZONE_DEFS[id].owner === owner && id !== "Pl_Hand" && id !== "Pl_Field" && id !== "Bot_ActionDeck" && !ZONE_DEFS[id].hiddenFromBoard;
     });
   }
   renderZoneIds(elId, ids);
+  if(owner === "bot") renderBotFieldPile();
 }
 
 function renderSharedZones(){
@@ -1060,7 +1161,13 @@ function renderMarketCards(){
       var sourceId = el.getAttribute("data-market-publish-from");
       if(state.zones[sourceId].cards.length === 0) return;
       var card = state.zones[sourceId].cards.shift();
-      applyMove([card], el.getAttribute("data-market-publish-to"), true, sourceId);
+      var moving = [card];
+      var removedLastUnrest = false;
+      if(card.type !== "Region" && state.zones.UnrestPile.cards.length > 0){
+        moving.push(state.zones.UnrestPile.cards.shift());
+        removedLastUnrest = state.zones.UnrestPile.cards.length === 0;
+      }
+      applyMove(moving, el.getAttribute("data-market-publish-to"), true, sourceId, {removedLastUnrest:removedLastUnrest});
     });
   });
   container.querySelectorAll("[data-market-detail]").forEach(function(el){
@@ -1384,7 +1491,7 @@ function cardTypeClass(card){
     Uncivilised:"card-type-uncivilised",
     Unrest:"card-type-unrest"
   };
-  return classes[card.type] || "";
+  return classes[card.type] || "card-type-neutral";
 }
 function cardIconsLine(card){
   var bits = [];
@@ -1434,7 +1541,7 @@ function renderActionBar(def, zone){
     html += '<button class="btn" id="abToggleAll">全部チェック'+(allSelected?'OFF':'ON')+'</button>';
   }
   html += '<button class="btn primary" id="abMove">選択したカードを移動</button>';
-  if(def.type === "field"){
+  if(currentZoneId === "Pl_Field"){
     html += '<button class="btn" id="abGarrison">下に置く（2枚選択）</button>';
   }
   if(def.type === "pile" || def.type === "power" || def.type === "field"){
@@ -1594,6 +1701,8 @@ function runInitialSetup(){
 
   shuffleArray(z.Pl_DrawDeck.cards);
   shuffleArray(z.Pl_NationDeck.cards);
+  z.Pl_NationDeck.cards = z.Pl_NationDeck.cards.concat(z.Pl_Accession.cards);
+  z.Pl_Accession.cards = [];
   var openingHand = z.Pl_DrawDeck.cards.splice(0, 5);
   z.Pl_Hand.cards = openingHand.concat(z.Pl_Hand.cards);
 
@@ -1632,7 +1741,7 @@ function runInitialSetup(){
   state.resources.player.action = 3;
   state.playerState = "Barbarian";
   state.botActionState = "Barbarian";
-  state.turn = 1;
+  state.turn = 0;
   state.turnHistory = [];
   state.resources.bot.progress = 1;
   state.resources.bot.material = 3;
@@ -1729,7 +1838,7 @@ function resolveMoveTokens(cards, sourceId, done){
   });
 }
 
-function applyMove(cards, destId, toTop, sourceId){
+function applyMove(cards, destId, toTop, sourceId, moveContext){
   var originalCards = cards.slice();
   resolveMoveTokens(originalCards, sourceId, function(confirmed){
     if(!confirmed){
@@ -1757,6 +1866,12 @@ function applyMove(cards, destId, toTop, sourceId){
     });
     save();
     renderBoard();
+    var marketZones = ["MainPile1","MainPile2","CivilisedPile","UncivilisedPile","RegionPile"];
+    var movedLastUnrest = moveContext && moveContext.removedLastUnrest;
+    if(!movedLastUnrest && sourceId === "UnrestPile" && marketZones.indexOf(destId) >= 0){
+      movedLastUnrest = separatedCards.some(function(card){ return card.type === "Unrest"; }) && state.zones.UnrestPile.cards.length === 0;
+    }
+    if(movedLastUnrest) alert("崩壊が発生してプレイヤーは敗北しました。");
     if(evolved.length){
       var names = evolved.map(function(side){ return side === "player" ? (state.playerNation || "プレイヤー") : (state.botNation || "BOT"); });
       alert(names.join("・") + "は帝国に進化しました");
