@@ -106,6 +106,9 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .quick-action-row .btn{flex:1;}
 .status-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:5px;}
 .status-action-grid .state-control-row,.status-action-grid .quick-action-row{margin:0;}
+.status-action-grid.player-actions{grid-template-columns:minmax(110px,1.15fr) repeat(2,minmax(0,1fr));align-items:stretch;}
+.status-action-grid.player-actions .resource-row{margin:0;}
+.status-action-grid.player-actions .resource-box{height:100%;}
 .board-layout{max-width:1800px;margin:0 auto;}
 .board-main{min-width:0;}
 @media(max-width:650px){.status-grid{grid-template-columns:1fr;}.status-panel{padding:9px;}}
@@ -342,8 +345,8 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
       <section class="status-panel player">
         <div class="status-title" id="playerStatusTitle">自分のトークン</div>
         <div class="resource-row" id="playerResources"></div>
-        <div class="resource-row" id="playerSecondaryResources"></div>
-        <div class="status-action-grid">
+        <div class="status-action-grid player-actions">
+          <div class="resource-row" id="playerSecondaryResources"></div>
           <div class="state-control-row" id="playerStateControls"></div>
           <div class="quick-action-row"><button class="btn small primary" id="btnDrawOne">1枚ドロー</button></div>
         </div>
@@ -993,7 +996,7 @@ function renderResources(){
     }).join("");
   }
   document.getElementById("playerResources").innerHTML = resourceBoxes("player", ["progress","population","material"]);
-  document.getElementById("playerSecondaryResources").innerHTML = resourceBoxes("player", ["action","exhaustion"]);
+  document.getElementById("playerSecondaryResources").innerHTML = resourceBoxes("player", ["action"]);
   document.getElementById("botResources").innerHTML = resourceBoxes("bot", ["progress","population","material"]);
   document.getElementById("playerStateControls").innerHTML = renderStateButtons("player", state.playerState);
   document.getElementById("botStateControls").innerHTML = renderStateButtons("bot", state.botActionState);
