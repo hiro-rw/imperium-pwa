@@ -341,7 +341,9 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
       <div class="k">BOT VP</div>
       <div class="v"><button id="bvpMinus">−</button><span id="bvpVal">0</span><button id="bvpPlus">＋</button></div>
     </div>
-    <button class="btn small primary" id="btnStartTurn">プレイヤーのターン</button>
+    <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
+    <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
+    <button class="btn small" id="btnUndo" disabled>1手戻す</button>
     <button class="btn small primary" id="btnInitialSetup">初期セットアップ</button>
     <button class="btn small" id="btnScore">集計</button>
     <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
@@ -398,7 +400,8 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
   <div class="field-board-row bot" id="botActionDeckBoard"></div>
 
   <div class="footer-actions helptext">
-    データは端末内（このブラウザ）に自動保存されます。CSVを読み込み直す必要はありません。
+    <button class="btn" id="btnExportLog">操作ログを書き出す（JSONL）</button>
+    <div style="margin-top:8px;">データは端末内（このブラウザ）に自動保存されます。CSVを読み込み直す必要はありません。</div>
   </div>
   </main>
 
@@ -499,6 +502,8 @@ var ZONE_DEFS = buildZoneDefs();
 var uidCounter = 1;
 var state = null; // set on start/resume
 var rawRows = []; // parsed CSV rows before game start
+var undoStack = []; // session-only snapshots; newest item is last
+var UNDO_LIMIT = 10;
 
 function freshState(playerNation, botNation){
   var zones = {};
@@ -521,7 +526,11 @@ function freshState(playerNation, botNation){
     playerState: "Barbarian",
     turn: 0,
     turnHistory: [],
-    scoringManual: {}
+    scoringManual: {},
+    phase: "setup",
+    operationLog: [],
+    operationSeq: 0,
+    gameId: "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8)
   };
 }
 
@@ -551,6 +560,10 @@ function ensureStateDefaults(s){
   if(typeof s.turn !== "number" || s.turn < 0) s.turn = 0;
   if(!Array.isArray(s.turnHistory)) s.turnHistory = [];
   if(!s.scoringManual || typeof s.scoringManual !== "object") s.scoringManual = {};
+  if(s.phase !== "player" && s.phase !== "bot" && s.phase !== "setup") s.phase = "setup";
+  if(!Array.isArray(s.operationLog)) s.operationLog = [];
+  if(typeof s.operationSeq !== "number") s.operationSeq = s.operationLog.length;
+  if(!s.gameId) s.gameId = "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
   Object.keys(s.zones || {}).forEach(function(id){
     var zone = s.zones[id];
     if(!zone.tokens) zone.tokens = {};
@@ -577,6 +590,73 @@ function loadSaved(){
     if(!raw) return null;
     return JSON.parse(raw);
   }catch(e){ return null; }
+}
+
+function operationSnapshot(){
+  var snapshot = JSON.parse(JSON.stringify(state));
+  delete snapshot.operationLog;
+  delete snapshot.operationSeq;
+  return snapshot;
+}
+
+function appendOperationLog(eventType, detail){
+  state.operationSeq = (state.operationSeq || 0) + 1;
+  var entry = {
+    schemaVersion: 1,
+    seq: state.operationSeq,
+    time: new Date().toISOString(),
+    turn: state.turn,
+    phase: state.phase || "setup",
+    event: eventType,
+    gameId: state.gameId
+  };
+  Object.keys(detail || {}).forEach(function(key){ entry[key] = detail[key]; });
+  state.operationLog.push(entry);
+  return entry;
+}
+
+function commitOperation(snapshot, eventType, detail){
+  undoStack.push(snapshot || operationSnapshot());
+  if(undoStack.length > UNDO_LIMIT) undoStack.shift();
+  appendOperationLog(eventType, detail);
+  renderUndoButton();
+}
+
+function beginOperation(eventType, detail){
+  commitOperation(operationSnapshot(), eventType, detail);
+}
+
+function renderUndoButton(){
+  var button = document.getElementById("btnUndo");
+  if(button) button.disabled = undoStack.length === 0;
+}
+
+function undoLastOperation(){
+  if(undoStack.length === 0) return;
+  var log = state.operationLog || [];
+  var seq = state.operationSeq || log.length;
+  var snapshot = undoStack.pop();
+  state = ensureStateDefaults(snapshot);
+  state.operationLog = log;
+  state.operationSeq = seq;
+  appendOperationLog("undo", {remainingUndo:undoStack.length});
+  save();
+  renderBoard();
+  renderUndoButton();
+}
+
+function exportOperationLog(){
+  var lines = (state.operationLog || []).map(function(entry){ return JSON.stringify(entry); }).join("\n");
+  var blob = new Blob([lines + (lines ? "\n" : "")], {type:"application/x-ndjson;charset=utf-8"});
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement("a");
+  var stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  link.href = url;
+  link.download = "imperium-log-" + stamp + ".jsonl";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
 }
 
 /* ============================================================
@@ -806,6 +886,7 @@ function renderBoard(){
   renderSharedZones();
   renderZoneRow("rowBot", "bot");
   renderBotActionDeck();
+  renderUndoButton();
 }
 
 function renderFieldSymbols(elementId, zoneId){
@@ -853,12 +934,12 @@ function renderTurn(){
     return '<span class="turn-history-entry">T'+entry.turn+' '+escapeHtml(side)+'：'+from+' → '+to+'</span>';
   }).join("");
 }
-document.getElementById("turnMinus").addEventListener("click", function(){ state.turn = Math.max(0, state.turn-1); save(); renderTurn(); });
-document.getElementById("turnPlus").addEventListener("click", function(){ state.turn++; save(); renderTurn(); });
-document.getElementById("pvpMinus").addEventListener("click", function(){ state.vp.player--; save(); renderVP(); });
-document.getElementById("pvpPlus").addEventListener("click", function(){ state.vp.player++; save(); renderVP(); });
-document.getElementById("bvpMinus").addEventListener("click", function(){ state.vp.bot--; save(); renderVP(); });
-document.getElementById("bvpPlus").addEventListener("click", function(){ state.vp.bot++; save(); renderVP(); });
+document.getElementById("turnMinus").addEventListener("click", function(){ var before=state.turn; beginOperation("turn_change",{before:before,after:Math.max(0,before-1),delta:-1}); state.turn = Math.max(0, state.turn-1); save(); renderTurn(); });
+document.getElementById("turnPlus").addEventListener("click", function(){ var before=state.turn; beginOperation("turn_change",{before:before,after:before+1,delta:1}); state.turn++; save(); renderTurn(); });
+document.getElementById("pvpMinus").addEventListener("click", function(){ var before=state.vp.player; beginOperation("vp_change",{side:"player",before:before,after:before-1,delta:-1}); state.vp.player--; save(); renderVP(); });
+document.getElementById("pvpPlus").addEventListener("click", function(){ var before=state.vp.player; beginOperation("vp_change",{side:"player",before:before,after:before+1,delta:1}); state.vp.player++; save(); renderVP(); });
+document.getElementById("bvpMinus").addEventListener("click", function(){ var before=state.vp.bot; beginOperation("vp_change",{side:"bot",before:before,after:before-1,delta:-1}); state.vp.bot--; save(); renderVP(); });
+document.getElementById("bvpPlus").addEventListener("click", function(){ var before=state.vp.bot; beginOperation("vp_change",{side:"bot",before:before,after:before+1,delta:1}); state.vp.bot++; save(); renderVP(); });
 
 function renderSetupButton(){
   var btn = document.getElementById("btnInitialSetup");
@@ -869,6 +950,7 @@ function renderSetupButton(){
 document.getElementById("btnInitialSetup").addEventListener("click", function(){
   if(state.setupCompleted) return;
   if(!confirm("各デッキをシャッフル・移動し、初期トークンを設定します。実行しますか？")) return;
+  beginOperation("initial_setup", {});
   runInitialSetup();
   alert("初期セットアップが完了しました");
 });
@@ -984,7 +1066,11 @@ function renderScoreWindow(){
   document.getElementById("scoreClose").addEventListener("click", function(){ scoreOverlay.classList.add("hidden"); });
   scoreDrawer.querySelectorAll("[data-score-manual]").forEach(function(input){
     input.addEventListener("change", function(){
-      state.scoringManual[input.getAttribute("data-score-manual")] = Number(input.value) || 0;
+      var uid = input.getAttribute("data-score-manual");
+      var before = Number(state.scoringManual[uid]) || 0;
+      var after = Number(input.value) || 0;
+      if(before !== after) beginOperation("manual_score_change", {cardUid:Number(uid),before:before,after:after});
+      state.scoringManual[uid] = after;
       save(); renderScoreWindow();
     });
   });
@@ -1016,7 +1102,11 @@ function renderResources(){
       var side = btn.getAttribute("data-resource-side");
       var key = btn.getAttribute("data-resource-key");
       var delta = Number(btn.getAttribute("data-resource-delta"));
-      state.resources[side][key] = Math.max(0, state.resources[side][key] + delta);
+      var before = state.resources[side][key];
+      var after = Math.max(0, before + delta);
+      if(before === after) return;
+      beginOperation("resource_change", {side:side, resource:key, before:before, after:after, delta:after-before});
+      state.resources[side][key] = after;
       save(); renderResources();
     });
   });
@@ -1025,6 +1115,7 @@ function renderResources(){
       var side = btn.getAttribute("data-side-toggle");
       var current = side === "player" ? state.playerState : state.botActionState;
       var value = current === "Barbarian" ? "Empire" : "Barbarian";
+      beginOperation("civilisation_change", {side:side, before:current, after:value, automatic:false});
       if(changeCivilisationState(side, value)){
         save(); renderResources(); renderBotActionDeck(); renderTurn();
       }
@@ -1064,7 +1155,7 @@ var turnStartDrawer = document.getElementById("turnStartDrawer");
 
 function openTurnActionDialog(){
   turnStartDrawer.innerHTML = '<div class="drawer-header"><h2>ターン'+state.turn+'：プレイヤー行動</h2></div>' +
-    '<p class="helptext">このターンに行う行動を選択してください。BOTダイスは '+state.botDie.last+' です。</p>' +
+    '<p class="helptext">このターンに行う行動を選択してください。</p>' +
     '<div class="turn-action-choice">' +
     '<button class="btn primary" data-turn-action="activate"><strong>発動</strong><span>アクショントークンを3にする</span></button>' +
     '<button class="btn" data-turn-action="innovate"><strong>革新</strong><span>アクショントークンを0にし、手札をすべて捨てる</span></button>' +
@@ -1078,47 +1169,66 @@ function openTurnActionDialog(){
 
 function resolveTurnAction(action){
   turnStartOverlay.classList.add("hidden");
+  var actionSnapshot = operationSnapshot();
   if(action === "activate"){
+    commitOperation(actionSnapshot, "player_action_selected", {action:action});
     state.resources.player.action = 3;
     save(); renderResources();
     return;
   }
+  appendOperationLog("player_action_selected", {action:action});
   state.resources.player.action = 0;
   var hand = state.zones.Pl_Hand;
   var moving = [];
   if(action === "innovate"){
     moving = hand.cards.slice();
     hand.cards = [];
-    if(moving.length) applyMove(moving, "Pl_Pile", false, "Pl_Hand");
+    if(moving.length) applyMove(moving, "Pl_Pile", false, "Pl_Hand", {operationSnapshot:actionSnapshot});
   } else {
     hand.cards = hand.cards.filter(function(card){
       if(card.type === "Unrest"){ moving.push(card); return false; }
       return true;
     });
-    if(moving.length) applyMove(moving, "UnrestPile", true, "Pl_Hand");
+    if(moving.length) applyMove(moving, "UnrestPile", true, "Pl_Hand", {operationSnapshot:actionSnapshot});
   }
-  if(!moving.length){ save(); renderBoard(); }
+  if(!moving.length){ commitOperation(actionSnapshot, "player_action_no_cards", {action:action,cards:[]}); save(); renderBoard(); }
 }
 
 document.getElementById("btnStartTurn").addEventListener("click", function(){
+  var snapshot = operationSnapshot();
   state.turn++;
-  rollBotDie();
+  state.phase = "player";
+  commitOperation(snapshot, "player_turn_start", {nextTurn:state.turn});
   save();
   renderTurn();
-  renderBotDie();
   openTurnActionDialog();
 });
+
+document.getElementById("btnStartBotTurn").addEventListener("click", function(){
+  var snapshot = operationSnapshot();
+  state.phase = "bot";
+  commitOperation(snapshot, "bot_turn_start", {});
+  var result = rollBotDie();
+  appendOperationLog("die_roll", {side:"bot", result:result});
+  save();
+  renderBotDie();
+});
+
+document.getElementById("btnUndo").addEventListener("click", undoLastOperation);
+document.getElementById("btnExportLog").addEventListener("click", exportOperationLog);
 
 document.getElementById("btnDrawOne").addEventListener("click", function(){
   var deck = state.zones.Pl_DrawDeck;
   if(deck.cards.length === 0){ alert("ドローデッキにカードがありません"); return; }
-  applyMove([deck.cards.shift()], "Pl_Hand", false, "Pl_DrawDeck");
+  var snapshot = operationSnapshot();
+  applyMove([deck.cards.shift()], "Pl_Hand", false, "Pl_DrawDeck", {operationSnapshot:snapshot});
 });
 
 document.getElementById("btnBotDiscardOne").addEventListener("click", function(){
   var deck = state.zones.Bot_DrawDeck;
   if(deck.cards.length === 0){ alert("ボットデッキにカードがありません"); return; }
-  applyMove([deck.cards.shift()], "Bot_Pile", true, "Bot_DrawDeck");
+  var snapshot = operationSnapshot();
+  applyMove([deck.cards.shift()], "Bot_Pile", true, "Bot_DrawDeck", {operationSnapshot:snapshot});
 });
 
 document.getElementById("btnNewGame").addEventListener("click", function(){
@@ -1173,6 +1283,7 @@ function renderMarketCards(){
     el.addEventListener("click", function(){
       var sourceId = el.getAttribute("data-market-publish-from");
       if(state.zones[sourceId].cards.length === 0) return;
+      var snapshot = operationSnapshot();
       var card = state.zones[sourceId].cards.shift();
       var moving = [card];
       var removedLastUnrest = false;
@@ -1180,7 +1291,7 @@ function renderMarketCards(){
         moving.push(state.zones.UnrestPile.cards.shift());
         removedLastUnrest = state.zones.UnrestPile.cards.length === 0;
       }
-      applyMove(moving, el.getAttribute("data-market-publish-to"), true, sourceId, {removedLastUnrest:removedLastUnrest});
+      applyMove(moving, el.getAttribute("data-market-publish-to"), true, sourceId, {removedLastUnrest:removedLastUnrest,operationSnapshot:snapshot});
     });
   });
   container.querySelectorAll("[data-market-detail]").forEach(function(el){
@@ -1194,8 +1305,9 @@ function renderMarketCards(){
       var card = zone.cards.find(function(c){ return c.uid === uid; });
       if(!card) return;
       openDestPicker(function(destId, toTop){
+        var snapshot = operationSnapshot();
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop, zoneId);
+        applyMove([card], destId, toTop, zoneId, {operationSnapshot:snapshot});
       }, zoneId);
     });
   });
@@ -1263,8 +1375,9 @@ function renderFieldBoard(containerId, zoneId){
       var card = zone.cards.find(function(c){ return c.uid === uid; });
       if(!card) return;
       openDestPicker(function(destId, toTop){
+        var snapshot = operationSnapshot();
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop, zoneId);
+        applyMove([card], destId, toTop, zoneId, {operationSnapshot:snapshot});
       }, zoneId);
     });
   });
@@ -1291,8 +1404,9 @@ function renderHandBoard(){
       var card = zone.cards.find(function(c){ return c.uid === uid; });
       if(!card) return;
       openDestPicker(function(destId, toTop){
+        var snapshot = operationSnapshot();
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop, "Pl_Hand");
+        applyMove([card], destId, toTop, "Pl_Hand", {operationSnapshot:snapshot});
       }, "Pl_Hand");
     });
   });
@@ -1327,6 +1441,7 @@ function renderBotActionDeck(){
       var uid = Number(el.getAttribute("data-action-reveal"));
       var card = zone.cards.find(function(c){ return c.uid === uid; });
       if(!card) return;
+      beginOperation("card_reveal_change", {zone:"Bot_ActionDeck",cardUid:card.uid,cardNo:card.cardNo,revealed:!card.actionRevealed});
       card.actionRevealed = !card.actionRevealed;
       save(); renderBotActionDeck();
     });
@@ -1337,8 +1452,9 @@ function renderBotActionDeck(){
       var card = zone.cards.find(function(c){ return c.uid === uid; });
       if(!card) return;
       openDestPicker(function(destId, toTop){
+        var snapshot = operationSnapshot();
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
-        applyMove([card], destId, toTop, "Bot_ActionDeck");
+        applyMove([card], destId, toTop, "Bot_ActionDeck", {operationSnapshot:snapshot});
       }, "Bot_ActionDeck");
     });
   });
@@ -1574,8 +1690,8 @@ function wireZoneDrawerEvents(def, zone){
     ["progress","material","population"].forEach(function(k){
       var minus = zoneDrawer.querySelector('[data-tok-minus="'+k+'"]');
       var plus = zoneDrawer.querySelector('[data-tok-plus="'+k+'"]');
-      if(minus) minus.addEventListener("click", function(){ zone.tokens[k] = Math.max(0, zone.tokens[k]-1); save(); renderZoneDrawer(); });
-      if(plus) plus.addEventListener("click", function(){ zone.tokens[k]++; save(); renderZoneDrawer(); });
+      if(minus) minus.addEventListener("click", function(){ var before=zone.tokens[k]; var after=Math.max(0,before-1); if(before===after)return; beginOperation("zone_token_change",{zone:currentZoneId,token:k,before:before,after:after,delta:-1}); zone.tokens[k]=after; save(); renderZoneDrawer(); });
+      if(plus) plus.addEventListener("click", function(){ var before=zone.tokens[k]; beginOperation("zone_token_change",{zone:currentZoneId,token:k,before:before,after:before+1,delta:1}); zone.tokens[k]++; save(); renderZoneDrawer(); });
     });
   }
 
@@ -1611,6 +1727,9 @@ function wireZoneDrawerEvents(def, zone){
       var hostUid = Number(parts[0]), gIdx = Number(parts[1]);
       var host = zone.cards.find(function(c){ return c.uid === hostUid; });
       if(!host) return;
+      var pending = host.garrison[gIdx];
+      if(!pending) return;
+      beginOperation("garrison_remove", {zone:currentZoneId, cardUid:pending.uid, cardNo:pending.cardNo, hostUid:host.uid, hostCardNo:host.cardNo});
       var g = host.garrison.splice(gIdx,1)[0];
       zone.cards.push(g);
       save(); renderZoneDrawer(); renderBoard();
@@ -1627,6 +1746,7 @@ function wireZoneDrawerEvents(def, zone){
     document.getElementById("daNPlus").addEventListener("click", function(){ changeMoveCount(1); });
     moveCountInput.addEventListener("change", function(){ changeMoveCount(0); });
     document.getElementById("daShuffle").addEventListener("click", function(){
+      beginOperation("deck_shuffle", {zone:currentZoneId, count:zone.cards.length});
       shuffleArray(zone.cards);
       save(); renderZoneDrawer();
     });
@@ -1634,8 +1754,9 @@ function wireZoneDrawerEvents(def, zone){
       var n = Math.max(1, Math.min(zone.cards.length, Number(moveCountInput.value)||1));
       if(zone.cards.length === 0){ alert("デッキにカードがありません"); return; }
       openDestPicker(function(destId, toTop){
+        var snapshot = operationSnapshot();
         var moving = zone.cards.splice(0, n);
-        applyMove(moving, destId, toTop, currentZoneId);
+        applyMove(moving, destId, toTop, currentZoneId, {operationSnapshot:snapshot});
         closeZoneDrawer();
       });
     });
@@ -1651,12 +1772,13 @@ function wireZoneDrawerEvents(def, zone){
     var uids = Object.keys(selection).filter(function(u){ return selection[u]; }).map(Number);
     if(uids.length === 0){ alert("移動するカードを選択してください"); return; }
     openDestPicker(function(destId, toTop){
+      var snapshot = operationSnapshot();
       var moving = [];
       zone.cards = zone.cards.filter(function(c){
         if(uids.indexOf(c.uid) >= 0){ moving.push(c); return false; }
         return true;
       });
-      applyMove(moving, destId, toTop, currentZoneId);
+      applyMove(moving, destId, toTop, currentZoneId, {operationSnapshot:snapshot});
       closeZoneDrawer();
     });
   });
@@ -1671,6 +1793,7 @@ function wireZoneDrawerEvents(def, zone){
     var pick = confirm(names[0]+" を "+names[1]+" の下に置きます。\n逆にする場合はキャンセルしてください。");
     var under = pick ? cardB : cardA;
     var moving = pick ? cardA : cardB;
+    beginOperation("garrison_add", {zone:currentZoneId, cardUid:moving.uid, cardNo:moving.cardNo, hostUid:under.uid, hostCardNo:under.cardNo});
     zone.cards = zone.cards.filter(function(c){ return c.uid !== moving.uid; });
     under.garrison.push(moving);
     save(); renderZoneDrawer(); renderBoard();
@@ -1679,6 +1802,7 @@ function wireZoneDrawerEvents(def, zone){
   var abSwap = document.getElementById("abSwap");
   if(abSwap) abSwap.addEventListener("click", function(){
     if(zone.cards.length < 2){ alert("カードが2枚未満です"); return; }
+    beginOperation("deck_rotate", {zone:currentZoneId, cardUid:zone.cards[0].uid, cardNo:zone.cards[0].cardNo});
     var top = zone.cards.shift();
     zone.cards.push(top);
     save(); renderZoneDrawer(); renderBoard();
@@ -1690,9 +1814,10 @@ function updateZoneExhaustion(zoneId, value){
   var zone = state.zones[zoneId];
   value = value ? 1 : 0;
   if(zone.exhaustedCounter === value) return;
+  if(zoneId.indexOf("Pl_") === 0 && value === 1 && state.resources.player.exhaustion <= 0){ alert("プレイヤーの消耗トークンがありません"); return; }
+  beginOperation("zone_exhaustion_change", {zone:zoneId, before:zone.exhaustedCounter, after:value});
   if(zoneId.indexOf("Pl_") === 0){
     if(value === 1){
-      if(state.resources.player.exhaustion <= 0){ alert("プレイヤーの消耗トークンがありません"); return; }
       state.resources.player.exhaustion--;
     } else {
       state.resources.player.exhaustion++;
@@ -1755,6 +1880,7 @@ function runInitialSetup(){
   state.playerState = "Barbarian";
   state.botActionState = "Barbarian";
   state.turn = 0;
+  state.phase = "setup";
   state.turnHistory = [];
   state.resources.bot.progress = 1;
   state.resources.bot.material = 3;
@@ -1776,11 +1902,13 @@ function doSearch(deckZone, type){
   var idx = deckZone.cards.findIndex(function(c){ return c.type === type; });
   if(idx === -1){
     var who = confirm("見つかりませんでした。VP+2を「プレイヤー」に加えますか？（キャンセルでBOTに加算）") ? "player" : "bot";
+    beginOperation("search_miss", {zone:currentZoneId, searchType:type, vpSide:who, vpDelta:2});
     state.vp[who] += 2;
     save(); renderVP();
     alert((who==="player"?"プレイヤー":"BOT")+"のVPに+2しました");
     return;
   }
+  beginOperation("card_search", {zone:currentZoneId, searchType:type, destination:"Temp", cardUid:deckZone.cards[idx].uid, cardNo:deckZone.cards[idx].cardNo});
   var card = deckZone.cards.splice(idx,1)[0];
   state.zones["Temp"].cards.unshift(card);
   save(); renderZoneDrawer(); renderBoard();
@@ -1804,7 +1932,7 @@ function resolveMoveTokens(cards, sourceId, done){
   var tokenCards = cardsWithTokens(cards);
   var sourceTokens = sourceId && state.zones[sourceId] ? state.zones[sourceId].tokens : null;
   var hasSourceTokens = sourceTokens && (sourceTokens.progress || sourceTokens.material || sourceTokens.population);
-  if(tokenCards.length === 0 && !hasSourceTokens){ done(true); return; }
+  if(tokenCards.length === 0 && !hasSourceTokens){ done(true, "none"); return; }
   var totals = {progress:0, material:0, population:0};
   tokenCards.forEach(function(card){
     totals.progress += card.progressTokens || 0;
@@ -1830,7 +1958,7 @@ function resolveMoveTokens(cards, sourceId, done){
     button.addEventListener("click", function(){
       var destination = button.getAttribute("data-token-destination");
       tokenMoveOverlay.classList.add("hidden");
-      if(destination === "cancel"){ done(false); return; }
+      if(destination === "cancel"){ done(false, "cancel"); return; }
       if(destination === "player" || destination === "bot"){
         state.resources[destination].progress += totals.progress;
         state.resources[destination].material += totals.material;
@@ -1846,16 +1974,21 @@ function resolveMoveTokens(cards, sourceId, done){
         sourceTokens.material = 0;
         sourceTokens.population = 0;
       }
-      done(true);
+      done(true, destination);
     });
   });
 }
 
 function applyMove(cards, destId, toTop, sourceId, moveContext){
   var originalCards = cards.slice();
-  resolveMoveTokens(originalCards, sourceId, function(confirmed){
+  var moveSnapshot = moveContext && moveContext.operationSnapshot ? moveContext.operationSnapshot : operationSnapshot();
+  resolveMoveTokens(originalCards, sourceId, function(confirmed, tokenHandling){
     if(!confirmed){
-      if(sourceId && state.zones[sourceId]) state.zones[sourceId].cards = originalCards.concat(state.zones[sourceId].cards);
+      var existingLog = state.operationLog;
+      var existingSeq = state.operationSeq;
+      state = ensureStateDefaults(moveSnapshot);
+      state.operationLog = existingLog;
+      state.operationSeq = existingSeq;
       save(); renderBoard();
       return;
     }
@@ -1877,6 +2010,14 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
       var side = destId === "Pl_Pile" ? "player" : (destId === "Bot_Pile" ? "bot" : null);
       if(side && card.type === "Accession" && changeCivilisationState(side, "Empire")) evolved.push(side);
     });
+    commitOperation(moveSnapshot, "card_move", {
+      from:sourceId || null,
+      to:destId,
+      position:toTop ? "top" : "bottom",
+      tokenHandling:tokenHandling,
+      cards:separatedCards.map(function(card){ return {uid:card.uid,cardNo:card.cardNo,name:card.name,type:card.type}; })
+    });
+    evolved.forEach(function(side){ appendOperationLog("civilisation_change", {side:side,before:"Barbarian",after:"Empire",automatic:true,reason:"Accession"}); });
     save();
     renderBoard();
     var marketZones = ["MainPile1","MainPile2","CivilisedPile","UncivilisedPile","RegionPile"];
@@ -1963,6 +2104,9 @@ function openCardDetail(zoneId, uid){
     populationTokens: card.populationTokens || 0
   };
   function commitDraftTokens(){
+    var before = {progressTokens:card.progressTokens||0,materialTokens:card.materialTokens||0,populationTokens:card.populationTokens||0};
+    var changed = Object.keys(before).some(function(k){ return before[k] !== draftTokens[k]; });
+    if(changed) beginOperation("card_token_change", {zone:zoneId,cardUid:card.uid,cardNo:card.cardNo,before:before,after:Object.assign({},draftTokens)});
     ["progressTokens","materialTokens","populationTokens"].forEach(function(k){ card[k] = draftTokens[k]; });
     save(); renderBoard();
   }
@@ -2010,6 +2154,9 @@ function openCardDetail(zoneId, uid){
       if(currentZoneId) renderZoneDrawer();
     });
     document.getElementById("cdExhaust").addEventListener("click", function(){
+      var before = !!card.exhausted;
+      if(!before && zoneId.indexOf("Pl_") === 0 && state.resources.player.exhaustion <= 0){ alert("プレイヤーの消耗トークンがありません"); return; }
+      beginOperation("card_exhaustion_change", {zone:zoneId,cardUid:card.uid,cardNo:card.cardNo,before:before,after:!before});
       if(toggleCardExhausted(zoneId, card)){ save(); render(); renderBoard(); }
     });
     var garrisonButton = document.getElementById("cdGarrison");
@@ -2020,6 +2167,7 @@ function openCardDetail(zoneId, uid){
         var hand = state.zones.Pl_Hand;
         var handCard = hand.cards.find(function(c){ return c.uid === handUid; });
         if(!handCard) return;
+        beginOperation("garrison_add", {zone:zoneId,cardUid:handCard.uid,cardNo:handCard.cardNo,hostUid:card.uid,hostCardNo:card.cardNo});
         hand.cards = hand.cards.filter(function(c){ return c.uid !== handUid; });
         card.garrison.push(handCard);
         selectingGarrison = false;
@@ -2029,6 +2177,9 @@ function openCardDetail(zoneId, uid){
     cardDrawer.querySelectorAll("[data-c-garrison-out]").forEach(function(el){
       el.addEventListener("click", function(){
         var idx = Number(el.getAttribute("data-c-garrison-out"));
+        var pending = card.garrison[idx];
+        if(!pending) return;
+        beginOperation("garrison_remove", {zone:zoneId,cardUid:pending.uid,cardNo:pending.cardNo,hostUid:card.uid,hostCardNo:card.cardNo,destination:"Pl_Hand"});
         var returning = card.garrison.splice(idx, 1)[0];
         if(!returning) return;
         state.zones.Pl_Hand.cards.push(returning);
