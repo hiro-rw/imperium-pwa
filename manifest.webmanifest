@@ -7,8 +7,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
-  "background_color": "#1E1D1B",
-  "theme_color": "#242220",
+  "background_color": "#302D29",
+  "theme_color": "#37332E",
   "icons": [
     {
       "src": "./imperium-icon-512.png",

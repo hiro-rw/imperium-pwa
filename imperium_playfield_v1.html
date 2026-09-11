@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#242220">
+<meta name="theme-color" content="#37332E">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./imperium-icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./imperium-icon-512.png">
 <title>IMPERIUM プレイフィールド</title>
 <style>
 :root{
-  --stone-900:#1E1D1B; --stone-850:#242220; --stone-800:#2A2825; --stone-750:#332F2A;
-  --stone-700:#3A3733; --stone-600:#4B473F; --stone-500:#5C574C;
-  --parchment:#EDE6D6; --parchment-dim:#B8AF9C; --parchment-faint:#8A8271;
+  --stone-900:#302D29; --stone-850:#37332E; --stone-800:#403B35; --stone-750:#4A443C;
+  --stone-700:#554E45; --stone-600:#665E53; --stone-500:#786F61;
+  --parchment:#F4EDDD; --parchment-dim:#D0C6B3; --parchment-faint:#AFA591;
   --verdigris:#7FA189; --verdigris-dim:#5C7A66;
   --oxblood:#B1544A; --oxblood-dim:#8A423A;
   --gold:#C9A227;
@@ -69,11 +69,11 @@ header.top h1{font-size:1rem;flex:1;min-width:140px;}
 .status-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;}
 .status-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:10px;display:grid;align-items:stretch;gap:7px;}
 .status-panel.player{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(300px,2.2fr);}
-.status-panel.bot{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(100px,0.8fr) minmax(230px,1.8fr);}
+.status-panel.bot{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(100px,0.8fr) minmax(300px,2.2fr);}
 .status-panel.player{border-left:3px solid var(--verdigris);}
 .status-panel.bot{border-left:3px solid var(--oxblood);}
-.status-panel.state-barbarian{border-left-color:#b95850;background:linear-gradient(90deg,rgba(185,88,80,0.16),rgba(42,40,37,0.96));}
-.status-panel.state-empire{border-left-color:#5f91c9;background:linear-gradient(90deg,rgba(95,145,201,0.16),rgba(42,40,37,0.96));}
+.status-panel.state-barbarian{border-left-color:#b95850;background:linear-gradient(90deg,rgba(185,88,80,0.18),rgba(64,59,53,0.96));}
+.status-panel.state-empire{border-left-color:#5f91c9;background:linear-gradient(90deg,rgba(95,145,201,0.18),rgba(64,59,53,0.96));}
 .status-title{font-family:var(--serif);font-size:0.85rem;margin-bottom:8px;color:var(--parchment-dim);}
 header.top .status-panel{padding:6px 8px;}
 header.top .status-title{font-size:0.72rem;margin:0;display:flex;align-items:center;}
@@ -111,9 +111,13 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .status-action-grid.player-actions{grid-template-columns:minmax(110px,1.15fr) repeat(2,minmax(0,1fr));align-items:stretch;}
 .status-action-grid.player-actions .resource-row{margin:0;}
 .status-action-grid.player-actions .resource-box{height:100%;}
+.status-action-grid.bot-actions{grid-template-columns:minmax(0,0.8fr) minmax(0,0.9fr) minmax(108px,1.5fr);}
+.bot-action-draw{display:flex;gap:5px;min-width:0;}
+.bot-action-draw .btn{flex:1;min-width:0;padding-left:6px;padding-right:6px;}
+.bot-action-draw input{width:52px;min-width:52px;text-align:center;padding:5px;}
 .board-layout{max-width:1800px;margin:0 auto;}
 .board-main{min-width:0;}
-@media(max-width:650px){.status-panel{padding:9px;display:block;}.status-title{margin-bottom:5px!important;}.status-action-grid{margin-top:5px;}.dice-row{margin-top:5px!important;}}
+@media(max-width:650px){.status-panel{padding:9px;display:block;}.status-title{margin-bottom:5px!important;}.status-action-grid{margin-top:5px;}.dice-row{margin-top:5px!important;}.status-action-grid.bot-actions{grid-template-columns:repeat(2,minmax(0,1fr));}.bot-action-draw{grid-column:1/-1;}}
 
 /* ---------- board sections ---------- */
 .section-title{font-size:0.68rem;letter-spacing:0.05em;color:var(--parchment-faint);margin:16px 16px 6px;}
@@ -148,6 +152,8 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .field-board-row{display:flex;gap:10px;overflow-x:auto;padding:0 16px 10px;-webkit-overflow-scrolling:touch;min-height:136px;}
 #playerHandBoard{flex-wrap:wrap;overflow-x:visible;}
 #playerHandBoard .field-card{flex:1 1 200px;min-width:180px;max-width:320px;}
+.player-power-card-slot{flex:0 0 280px;display:flex;}
+.player-power-card-slot .field-card{width:100%;min-height:0;}
 .field-card{flex:0 0 220px;background:var(--stone-800);border:1px solid var(--stone-600);border-top:3px solid var(--verdigris);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:7px;}
 .field-card.hand-card{border-top-color:var(--gold);}
 .field-card.action-deck-card{border-top-color:var(--oxblood);}
@@ -166,7 +172,7 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .field-card.card-type-fame{border-top-color:#a877c8;background:rgba(168,119,200,0.08);}
 .field-card.card-type-uncivilised{border-top-color:#679b69;background:rgba(103,155,105,0.08);}
 .field-card.card-type-unrest{border-top-color:#bd5b55;background:rgba(189,91,85,0.09);}
-.field-card.card-type-neutral{border-top-color:#8c877c;background:#2d2b28;}
+.field-card.card-type-neutral{border-top-color:#aaa397;background:#454039;}
 .field-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
 .field-card-name{font-family:var(--serif);font-size:0.95rem;line-height:1.25;}
 .field-card-status{font-size:0.67rem;color:var(--parchment-faint);}
@@ -230,7 +236,7 @@ ul.card-list li.card-type-tributary{border-left:4px solid #5f91c9;background:rgb
 ul.card-list li.card-type-fame{border-left:4px solid #a877c8;background:rgba(168,119,200,0.07);}
 ul.card-list li.card-type-uncivilised{border-left:4px solid #679b69;background:rgba(103,155,105,0.07);}
 ul.card-list li.card-type-unrest{border-left:4px solid #bd5b55;background:rgba(189,91,85,0.08);}
-ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#272522;}
+ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C3833;}
 
 .action-bar{position:sticky;bottom:-20px;background:var(--stone-850);padding:10px 0 0;margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--stone-700);}
 
@@ -271,7 +277,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
   header.top .resource-box>span:first-child{grid-column:1/-1;width:100%;text-align:center;white-space:nowrap;font-size:0.68rem;line-height:1.2;}
   header.top .resource-box button{width:44px;height:44px;min-width:44px;font-size:1.1rem;flex-basis:44px;}
   header.top .status-panel.player{grid-template-columns:68px minmax(340px,3fr) minmax(220px,2fr);}
-  header.top .status-panel.bot{grid-template-columns:68px minmax(340px,3fr) 54px minmax(180px,1.7fr);}
+  header.top .status-panel.bot{grid-template-columns:68px minmax(340px,3fr) 54px minmax(235px,2fr);}
   header.top .dice-history{display:none;}
   .deck-actions .n-input .step-btn{width:46px;height:46px;font-size:1.2rem;}
   .drawer-header .close{min-width:48px;min-height:48px;padding:8px;}
@@ -283,6 +289,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
   .dest-list{gap:10px;}
   .dest-list button{min-height:54px;padding:14px 12px;font-size:0.86rem;}
   .action-bar button{min-height:48px;}
+  .bot-action-draw input{min-height:48px;font-size:1rem;}
 }
 @media (max-width:520px){
   .dest-list{grid-template-columns:repeat(2,minmax(0,1fr));}
@@ -355,7 +362,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
         <div class="status-action-grid player-actions">
           <div class="resource-row" id="playerSecondaryResources"></div>
           <div class="state-control-row" id="playerStateControls"></div>
-          <div class="quick-action-row"><button class="btn small primary" id="btnDrawOne">1枚ドロー</button></div>
+          <div class="quick-action-row"><button class="btn small primary" id="btnDrawOne">1枚ドロー</button><button class="btn small primary" id="btnDrawToFive">5枚までドロー</button></div>
         </div>
       </section>
       <section class="status-panel bot">
@@ -365,9 +372,10 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
           <div class="dice-result" id="botDieResult">—</div>
           <div class="dice-history" id="botDieHistory">履歴：なし</div>
         </div>
-        <div class="status-action-grid">
+        <div class="status-action-grid bot-actions">
           <div class="state-control-row" id="botStateControls"></div>
           <div class="quick-action-row"><button class="btn small" id="btnBotDiscardOne">1枚破棄</button></div>
+          <div class="bot-action-draw"><button class="btn small primary" id="btnBotActionDraw">アクションドロー</button><input type="number" id="botActionTarget" value="5" min="1" inputmode="numeric" aria-label="BOT ActionDeckの目標枚数"></div>
         </div>
       </section>
     </div>
@@ -379,7 +387,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #8c877c;background:#2725
   <div class="section-title player" id="labelPlayerSection">自分</div>
   <div class="zone-row" id="rowPlayer"></div>
 
-  <div class="section-title player">自分の手札</div>
+  <div class="section-title player" id="playerHandTitle">自分の手札　0枚</div>
   <div class="field-board-row" id="playerHandBoard"></div>
 
   <div class="section-title player field-section-title"><span>自分の配置領域</span><span class="field-symbol-counts" id="playerFieldSymbols"></span></div>
@@ -530,7 +538,8 @@ function freshState(playerNation, botNation){
     phase: "setup",
     operationLog: [],
     operationSeq: 0,
-    gameId: "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8)
+    gameId: "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8),
+    botActionTarget: 5
   };
 }
 
@@ -564,6 +573,8 @@ function ensureStateDefaults(s){
   if(!Array.isArray(s.operationLog)) s.operationLog = [];
   if(typeof s.operationSeq !== "number") s.operationSeq = s.operationLog.length;
   if(!s.gameId) s.gameId = "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
+  if(typeof s.botActionTarget !== "number" || !isFinite(s.botActionTarget)) s.botActionTarget = 5;
+  s.botActionTarget = Math.max(1, Math.floor(s.botActionTarget));
   Object.keys(s.zones || {}).forEach(function(id){
     var zone = s.zones[id];
     if(!zone.tokens) zone.tokens = {};
@@ -607,6 +618,7 @@ function appendOperationLog(eventType, detail){
     time: new Date().toISOString(),
     turn: state.turn,
     phase: state.phase || "setup",
+    actor: state.phase || "setup",
     event: eventType,
     gameId: state.gameId
   };
@@ -865,6 +877,13 @@ function escapeHtml(s){
   });
 }
 
+function displayJapanese(s){
+  return String(s || "")
+    .replace(/市民トークン/g, "人口トークン")
+    .replace(/市民/g, "人口")
+    .replace(/属国/g, "属州");
+}
+
 function zoneOrderFor(owner){
   return Object.keys(ZONE_DEFS).filter(function(id){ return ZONE_DEFS[id].owner === owner; })
     .sort(function(a,b){
@@ -880,6 +899,7 @@ function renderBoard(){
   renderResources();
   renderBotDie();
   renderZoneRow("rowPlayer", "player");
+  renderPlayerPowerCard();
   renderHandBoard();
   renderFieldBoard("playerFieldBoard", "Pl_Field");
   renderFieldSymbols("playerFieldSymbols", "Pl_Field");
@@ -1046,7 +1066,7 @@ function renderScoreWindow(){
   if(manualRows.length === 0) html += '<div class="empty-note">手動計算が必要なカードはありません</div>';
   else manualRows.forEach(function(item){
     html += '<div class="score-manual-row"><div>'+escapeHtml(item.side)+'<br><strong>'+escapeHtml(item.card.name)+'</strong><br><span class="card-meta">'+escapeHtml(item.card.cardNo)+'</span></div>'+
-      '<div class="score-manual-text">'+escapeHtml(item.card.cardText || "")+'</div>'+
+      '<div class="score-manual-text">'+escapeHtml(displayJapanese(item.card.cardText || ""))+'</div>'+
       '<label><span class="helptext">VP</span><input type="number" data-score-manual="'+item.card.uid+'" value="'+manualVp(item.card)+'"></label></div>';
   });
 
@@ -1058,7 +1078,7 @@ function renderScoreWindow(){
   html += '<table class="score-table"><tbody>'+
     '<tr><td>物資トークン数</td><td>'+state.resources.player.material+'</td><td>人口トークン数</td><td>'+state.resources.player.population+'</td></tr>'+
     '<tr><td>所持文明カード数</td><td>'+countType("Civilised")+'</td><td>所持未開カード数</td><td>'+countType("Uncivilised")+'</td></tr>'+
-    '<tr><td>所持領地カード数</td><td>'+countType("Region")+'</td><td>所持属国カード数</td><td>'+countType("Tributary")+'</td></tr>'+
+    '<tr><td>所持領地カード数</td><td>'+countType("Region")+'</td><td>所持属州カード数</td><td>'+countType("Tributary")+'</td></tr>'+
     '<tr><td>総カード枚数</td><td>'+player.entries.length+'</td><td>配置領域の領地以外</td><td>'+fieldEntries.filter(function(card){ return card.type !== "Region"; }).length+'</td></tr>'+
     '</tbody></table>';
 
@@ -1091,6 +1111,7 @@ function renderResources(){
   document.getElementById("botResources").innerHTML = resourceBoxes("bot", ["progress","population","material"]);
   document.getElementById("playerStateControls").innerHTML = renderStateButtons("player", state.playerState);
   document.getElementById("botStateControls").innerHTML = renderStateButtons("bot", state.botActionState);
+  document.getElementById("botActionTarget").value = state.botActionTarget;
   var playerPanel = document.querySelector(".status-panel.player");
   var botPanel = document.querySelector(".status-panel.bot");
   playerPanel.classList.toggle("state-barbarian", state.playerState === "Barbarian");
@@ -1197,10 +1218,13 @@ function resolveTurnAction(action){
 document.getElementById("btnStartTurn").addEventListener("click", function(){
   var snapshot = operationSnapshot();
   state.turn++;
+  var result = rollBotDie();
   state.phase = "player";
-  commitOperation(snapshot, "player_turn_start", {nextTurn:state.turn});
+  commitOperation(snapshot, "player_turn_start", {nextTurn:state.turn,botDie:result});
+  appendOperationLog("die_roll", {side:"bot", result:result,trigger:"player_turn_start"});
   save();
   renderTurn();
+  renderBotDie();
   openTurnActionDialog();
 });
 
@@ -1208,10 +1232,7 @@ document.getElementById("btnStartBotTurn").addEventListener("click", function(){
   var snapshot = operationSnapshot();
   state.phase = "bot";
   commitOperation(snapshot, "bot_turn_start", {});
-  var result = rollBotDie();
-  appendOperationLog("die_roll", {side:"bot", result:result});
   save();
-  renderBotDie();
 });
 
 document.getElementById("btnUndo").addEventListener("click", undoLastOperation);
@@ -1224,11 +1245,73 @@ document.getElementById("btnDrawOne").addEventListener("click", function(){
   applyMove([deck.cards.shift()], "Pl_Hand", false, "Pl_DrawDeck", {operationSnapshot:snapshot});
 });
 
+document.getElementById("btnDrawToFive").addEventListener("click", function(){
+  var hand = state.zones.Pl_Hand;
+  var deck = state.zones.Pl_DrawDeck;
+  var needed = Math.max(0, 5 - hand.cards.length);
+  if(needed === 0) return;
+  if(deck.cards.length === 0){
+    alert("ドローデッキが空になりました。捨て札パイルをリシャッフルしてから、もう一度『5枚までドロー』を押してください。");
+    return;
+  }
+  var snapshot = operationSnapshot();
+  var drawCount = Math.min(needed, deck.cards.length);
+  var stoppedByEmptyDeck = drawCount < needed;
+  var moving = deck.cards.splice(0, drawCount);
+  applyMove(moving, "Pl_Hand", false, "Pl_DrawDeck", {
+    operationSnapshot:snapshot,
+    directAction:"draw_to_five",
+    afterMove:function(completed){
+      if(completed && stoppedByEmptyDeck){
+        alert("ドローデッキが空になりました。捨て札パイルをリシャッフルしてから、もう一度『5枚までドロー』を押してください。");
+      }
+    }
+  });
+});
+
 document.getElementById("btnBotDiscardOne").addEventListener("click", function(){
   var deck = state.zones.Bot_DrawDeck;
   if(deck.cards.length === 0){ alert("ボットデッキにカードがありません"); return; }
   var snapshot = operationSnapshot();
   applyMove([deck.cards.shift()], "Bot_Pile", true, "Bot_DrawDeck", {operationSnapshot:snapshot});
+});
+
+function updateBotActionTargetFromInput(){
+  var input = document.getElementById("botActionTarget");
+  var value = Math.max(1, Math.floor(Number(input.value) || 5));
+  input.value = value;
+  if(value === state.botActionTarget) return value;
+  beginOperation("bot_action_target_change", {before:state.botActionTarget,after:value});
+  state.botActionTarget = value;
+  save();
+  return value;
+}
+
+document.getElementById("botActionTarget").addEventListener("change", updateBotActionTargetFromInput);
+
+document.getElementById("btnBotActionDraw").addEventListener("click", function(){
+  var target = updateBotActionTargetFromInput();
+  var actionDeck = state.zones.Bot_ActionDeck;
+  var deck = state.zones.Bot_DrawDeck;
+  var needed = Math.max(0, target - actionDeck.cards.length);
+  if(needed === 0) return;
+  if(deck.cards.length === 0){
+    alert("BOTデッキが空になりました。BOTの捨て札パイルをリシャッフルしてから、もう一度『アクションドロー』を押してください。");
+    return;
+  }
+  var snapshot = operationSnapshot();
+  var drawCount = Math.min(needed, deck.cards.length);
+  var stoppedByEmptyDeck = drawCount < needed;
+  var moving = deck.cards.splice(0, drawCount);
+  applyMove(moving, "Bot_ActionDeck", false, "Bot_DrawDeck", {
+    operationSnapshot:snapshot,
+    directAction:"bot_action_draw",
+    afterMove:function(completed){
+      if(completed && stoppedByEmptyDeck){
+        alert("BOTデッキが空になりました。BOTの捨て札パイルをリシャッフルしてから、もう一度『アクションドロー』を押してください。");
+      }
+    }
+  });
 });
 
 document.getElementById("btnNewGame").addEventListener("click", function(){
@@ -1243,11 +1326,46 @@ function renderZoneRow(elId, owner){
     ids = ["Bot_DynastyDeck","Bot_DrawDeck","Bot_Pile","Bot_History"];
   } else {
     ids = Object.keys(ZONE_DEFS).filter(function(id){
-      return ZONE_DEFS[id].owner === owner && id !== "Pl_Hand" && id !== "Pl_Field" && id !== "Bot_ActionDeck" && !ZONE_DEFS[id].hiddenFromBoard;
+      return ZONE_DEFS[id].owner === owner && id !== "Pl_Hand" && id !== "Pl_Field" && id !== "Pl_Power" && id !== "Bot_ActionDeck" && !ZONE_DEFS[id].hiddenFromBoard;
     });
   }
   renderZoneIds(elId, ids);
   if(owner === "bot") renderBotFieldPile();
+}
+
+function renderPlayerPowerCard(){
+  var container = document.getElementById("rowPlayer");
+  var historyTile = container.querySelector('[data-zone-id="Pl_History"]');
+  var slot = document.createElement("div");
+  slot.className = "player-power-card-slot";
+  var zone = state.zones.Pl_Power;
+  var card = zone && zone.cards[0];
+  if(!card){
+    slot.innerHTML = '<div class="zone-tile empty"><div class="lbl">パワーカード</div><div class="cnt">0</div><div class="top">空</div></div>';
+    container.insertBefore(slot, historyTile || null);
+    return;
+  }
+  var badges = [];
+  if(zone.exhaustedCounter) badges.push('<span class="card-token-badge exhaustion">消耗トークン '+zone.exhaustedCounter+'</span>');
+  if(card.progressTokens) badges.push('<span class="card-token-badge">進歩 '+card.progressTokens+'</span>');
+  if(card.populationTokens) badges.push('<span class="card-token-badge">人口 '+card.populationTokens+'</span>');
+  if(card.materialTokens) badges.push('<span class="card-token-badge">物資 '+card.materialTokens+'</span>');
+  slot.innerHTML = '<article class="field-card '+cardTypeClass(card)+'">'+
+    '<div class="field-card-head"><div><div class="field-card-name">パワーカード：'+escapeHtml(card.name)+'</div></div><span class="card-meta">'+escapeHtml(card.cardNo)+'</span></div>'+
+    '<div class="card-meta">'+cardMetaLine(card)+'</div>'+
+    '<div class="card-token-badges">'+(badges.length?badges.join(''):'<span class="card-token-badge">トークンなし</span>')+'</div>'+
+    '<div class="hand-card-text">'+escapeHtml(displayJapanese(card.cardText || ""))+'</div>'+
+    '<div class="field-card-actions"><button class="btn small" id="playerPowerDetail">一覧・トークン</button><button class="btn small primary" id="playerPowerMove">このカードを移動</button></div>'+
+    '</article>';
+  container.insertBefore(slot, historyTile || null);
+  document.getElementById("playerPowerDetail").addEventListener("click", function(){ openZoneDrawer("Pl_Power"); });
+  document.getElementById("playerPowerMove").addEventListener("click", function(){
+    openDestPicker(function(destId, toTop){
+      var snapshot = operationSnapshot();
+      zone.cards = zone.cards.filter(function(item){ return item.uid !== card.uid; });
+      applyMove([card], destId, toTop, "Pl_Power", {operationSnapshot:snapshot});
+    }, "Pl_Power");
+  });
 }
 
 function renderSharedZones(){
@@ -1275,7 +1393,7 @@ function renderMarketCards(){
       '<div class="field-card-head"><div class="field-card-name">'+escapeHtml(card.name)+'</div><span class="card-meta">'+escapeHtml(card.cardNo)+'</span></div>' +
       '<div class="card-meta">'+cardMetaLine(card)+'</div>' +
       marketTokenBadges(zone) +
-      '<div class="hand-card-text">'+escapeHtml(card.cardText || "")+'</div>' +
+      '<div class="hand-card-text">'+escapeHtml(displayJapanese(card.cardText || ""))+'</div>' +
       '<div class="field-card-actions"><button class="btn small" data-market-detail="'+zoneId+'">一覧・トークン</button><button class="btn small primary" data-market-move="'+zoneId+'" data-market-uid="'+card.uid+'">このカードを移動</button></div>' +
       '</article></div>';
   }).join("");
@@ -1320,6 +1438,7 @@ function renderZoneIds(elId, ids){
     var def = ZONE_DEFS[id];
     var zone = state.zones[id];
     var tile = document.createElement("div");
+    tile.setAttribute("data-zone-id", id);
     tile.className = "zone-tile " + def.type + (zone.cards.length===0 ? " empty" : "");
     var topText = "";
     if(def.type === "deck"){
@@ -1359,7 +1478,7 @@ function renderFieldBoard(containerId, zoneId){
       '<div class="field-card-head"><div><div class="field-card-name">'+escapeHtml(card.name)+'</div><div class="field-card-status">'+(card.exhausted?'● 消耗トークンあり':'○ 未消耗')+'</div></div><span class="card-meta">'+escapeHtml(card.cardNo)+'</span></div>' +
       '<div class="card-meta">'+cardMetaLine(card)+'</div>' +
       cardTokenBadges(card) +
-      '<div class="hand-card-text">'+escapeHtml(card.cardText || "")+'</div>' +
+      '<div class="hand-card-text">'+escapeHtml(displayJapanese(card.cardText || ""))+'</div>' +
       '<div class="field-garrison"><strong>駐留カード（'+garrison.length+'）</strong>'+garrisonHtml+'</div>' +
       '<div class="field-card-actions"><button class="btn small" data-field-detail="'+card.uid+'">詳細</button><button class="btn small primary" data-field-move="'+card.uid+'">このカードを移動</button></div>' +
       '</article>';
@@ -1386,6 +1505,7 @@ function renderFieldBoard(containerId, zoneId){
 function renderHandBoard(){
   var container = document.getElementById("playerHandBoard");
   var zone = state.zones.Pl_Hand;
+  document.getElementById("playerHandTitle").textContent = "自分の手札　"+(zone ? zone.cards.length : 0)+"枚";
   if(!zone || zone.cards.length === 0){
     container.innerHTML = '<div class="field-board-empty">手札はありません</div>';
     return;
@@ -1394,7 +1514,7 @@ function renderHandBoard(){
     return '<article class="field-card hand-card '+cardTypeClass(card)+'">' +
       '<div class="field-card-head"><div class="field-card-name">'+escapeHtml(card.name)+'</div><span class="card-meta">'+escapeHtml(card.cardNo)+'</span></div>' +
       '<div class="card-meta">'+cardMetaLine(card)+'</div>' +
-      '<div class="hand-card-text">'+escapeHtml(card.cardText || "")+'</div>' +
+      '<div class="hand-card-text">'+escapeHtml(displayJapanese(card.cardText || ""))+'</div>' +
       '<div class="field-card-actions"><button class="btn small primary" data-hand-move="'+card.uid+'">このカードを移動</button></div>' +
       '</article>';
   }).join("");
@@ -1431,7 +1551,7 @@ function renderBotActionDeck(){
       '<div class="field-card-head"><div class="field-card-name">'+escapeHtml(card.name)+'</div><span class="card-meta">'+escapeHtml(card.cardNo)+'</span></div>' +
       '<div class="card-meta">'+cardMetaLine(card)+'</div>' +
       cardTokenBadges(card) +
-      '<div class="hand-card-text">'+escapeHtml(card.cardText || "")+'</div>' +
+      '<div class="hand-card-text">'+escapeHtml(displayJapanese(card.cardText || ""))+'</div>' +
       renderBotActionForCard(card) +
       '<div class="field-card-actions"><button class="btn small" data-action-reveal="'+card.uid+'">非公開に戻す</button><button class="btn small primary" data-action-move="'+card.uid+'">このカードを移動</button></div>' +
       '</article>';
@@ -1479,7 +1599,7 @@ function botActionResultHtml(action, label, isFallback){
   return '<div class="bot-action-result'+(isFallback?' fallback':'')+'">' +
     '<div class="result-label">'+escapeHtml(label)+'</div>' +
     '<div class="result-name">'+escapeHtml(action.name)+' <span class="card-meta">'+escapeHtml(action.actionKey || "")+'</span></div>' +
-    '<div class="result-text">'+escapeHtml(action.cardText || "")+'</div>' +
+    '<div class="result-text">'+escapeHtml(displayJapanese(action.cardText || ""))+'</div>' +
     '</div>';
 }
 
@@ -1568,10 +1688,13 @@ function renderZoneDrawer(){
 
 function renderDeckControls(def, zone){
   var typesPresent = Array.from(new Set(zone.cards.map(function(c){return c.type;}).filter(Boolean)));
+  var hasDirectDiscard = def.id === "Pl_NationDeck" || def.id === "Bot_DynastyDeck";
   var html = '<div class="deck-actions">';
-  html += '<button class="btn" id="daShuffle">シャッフル</button>';
+  if(!def.id.endsWith("_NationDeck")) html += '<button class="btn" id="daShuffle">シャッフル</button>';
+  if(hasDirectDiscard) html += '<button class="btn primary" id="daDiscardTop"'+(zone.cards.length ? '' : ' disabled')+'>1枚捨てる</button>';
   html += '<div class="n-input"><span style="font-size:0.75rem;color:var(--parchment-faint);">移動</span><button class="btn step-btn" id="daNMinus" aria-label="移動枚数を減らす">−</button><input type="number" id="daN" value="1" min="1" max="'+Math.max(1, zone.cards.length)+'" inputmode="numeric"><button class="btn step-btn" id="daNPlus" aria-label="移動枚数を増やす">＋</button><button class="btn small" id="daMove">実行</button></div>';
   html += '</div>';
+  if(def.id.endsWith("_NationDeck")) html += '<p class="helptext">継承カードを最下部に固定するため、このデッキはゲーム中にシャッフルできません。</p>';
   if(typesPresent.length > 0){
     html += '<div style="margin-bottom:10px;"><div style="font-size:0.72rem;color:var(--parchment-faint);margin-bottom:6px;">検索（指定属性）</div><div class="dest-list">';
     typesPresent.forEach(function(t){
@@ -1644,7 +1767,7 @@ function renderCardList(zone, zoneId, isField){
     html += '<div class="card-meta">'+cardMetaLine(card)+'</div>';
     var icons = cardIconsLine(card);
     if(icons) html += '<div class="card-icons">'+icons+'</div>';
-    if(card.cardText) html += '<div class="card-text">'+escapeHtml(card.cardText)+'</div>';
+    if(card.cardText) html += '<div class="card-text">'+escapeHtml(displayJapanese(card.cardText))+'</div>';
     if(isField && card.garrison && card.garrison.length>0){
       html += '<div class="garrison-box"><div class="gh">駐留カード</div>';
       card.garrison.forEach(function(g, gi){
@@ -1668,6 +1791,9 @@ function renderActionBar(def, zone){
   if(currentZoneId === "Pl_Pile" || currentZoneId === "Bot_Pile"){
     var allSelected = zone.cards.length > 0 && zone.cards.every(function(c){ return !!selection[c.uid]; });
     html += '<button class="btn" id="abToggleAll">全部チェック'+(allSelected?'OFF':'ON')+'</button>';
+    var reshuffleDeckId = currentZoneId === "Pl_Pile" ? "Pl_DrawDeck" : "Bot_DrawDeck";
+    var canReshuffle = zone.cards.length > 0 && state.zones[reshuffleDeckId].cards.length === 0;
+    html += '<button class="btn primary" id="abReshuffle"'+(canReshuffle?'':' disabled')+'>リシャッフル</button>';
   }
   html += '<button class="btn primary" id="abMove">選択したカードを移動</button>';
   if(currentZoneId === "Pl_Field"){
@@ -1701,6 +1827,19 @@ function wireZoneDrawerEvents(def, zone){
     selection = {};
     if(!allSelected) zone.cards.forEach(function(c){ selection[c.uid] = true; });
     renderZoneDrawer();
+  });
+
+  var abReshuffle = document.getElementById("abReshuffle");
+  if(abReshuffle) abReshuffle.addEventListener("click", function(){
+    var destination = currentZoneId === "Pl_Pile" ? "Pl_DrawDeck" : "Bot_DrawDeck";
+    if(state.zones[destination].cards.length > 0){ alert(ZONE_DEFS[destination].label+"にカードが残っているため、リシャッフルできません"); return; }
+    if(zone.cards.length === 0){ alert("捨て札パイルにカードがありません"); return; }
+    var snapshot = operationSnapshot();
+    shuffleArray(zone.cards);
+    var moving = zone.cards.slice();
+    zone.cards = [];
+    applyMove(moving, destination, true, currentZoneId, {operationSnapshot:snapshot,directAction:"reshuffle_discard"});
+    closeZoneDrawer();
   });
 
   // selection toggling
@@ -1745,10 +1884,20 @@ function wireZoneDrawerEvents(def, zone){
     document.getElementById("daNMinus").addEventListener("click", function(){ changeMoveCount(-1); });
     document.getElementById("daNPlus").addEventListener("click", function(){ changeMoveCount(1); });
     moveCountInput.addEventListener("change", function(){ changeMoveCount(0); });
-    document.getElementById("daShuffle").addEventListener("click", function(){
-      beginOperation("deck_shuffle", {zone:currentZoneId, count:zone.cards.length});
-      shuffleArray(zone.cards);
-      save(); renderZoneDrawer();
+    var shuffleButton = document.getElementById("daShuffle");
+    if(shuffleButton) shuffleButton.addEventListener("click", function(){
+        beginOperation("deck_shuffle", {zone:currentZoneId, count:zone.cards.length});
+        shuffleArray(zone.cards);
+        save(); renderZoneDrawer();
+      });
+    var discardTopButton = document.getElementById("daDiscardTop");
+    if(discardTopButton) discardTopButton.addEventListener("click", function(){
+      if(zone.cards.length === 0){ alert("デッキにカードがありません"); return; }
+      var snapshot = operationSnapshot();
+      var destination = currentZoneId === "Pl_NationDeck" ? "Pl_Pile" : "Bot_Pile";
+      var moving = zone.cards.shift();
+      applyMove([moving], destination, true, currentZoneId, {operationSnapshot:snapshot,directAction:"discard_top"});
+      closeZoneDrawer();
     });
     document.getElementById("daMove").addEventListener("click", function(){
       var n = Math.max(1, Math.min(zone.cards.length, Number(moveCountInput.value)||1));
@@ -1990,6 +2139,7 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
       state.operationLog = existingLog;
       state.operationSeq = existingSeq;
       save(); renderBoard();
+      if(moveContext && typeof moveContext.afterMove === "function") moveContext.afterMove(false);
       return;
     }
     var dest = state.zones[destId];
@@ -2010,12 +2160,17 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
       var side = destId === "Pl_Pile" ? "player" : (destId === "Bot_Pile" ? "bot" : null);
       if(side && card.type === "Accession" && changeCivilisationState(side, "Empire")) evolved.push(side);
     });
+    var movedCardsForLog = separatedCards.map(function(card){ return {uid:card.uid,cardNo:card.cardNo,name:card.name,type:card.type}; });
+    var moveActor = sourceId && sourceId.indexOf("Pl_") === 0 ? "player" : (sourceId && sourceId.indexOf("Bot_") === 0 ? "bot" : (state.phase || "setup"));
     commitOperation(moveSnapshot, "card_move", {
+      actor:moveActor,
+      action:(moveContext && moveContext.directAction) || "move",
       from:sourceId || null,
       to:destId,
       position:toTop ? "top" : "bottom",
       tokenHandling:tokenHandling,
-      cards:separatedCards.map(function(card){ return {uid:card.uid,cardNo:card.cardNo,name:card.name,type:card.type}; })
+      card:movedCardsForLog.length === 1 ? movedCardsForLog[0] : null,
+      cards:movedCardsForLog
     });
     evolved.forEach(function(side){ appendOperationLog("civilisation_change", {side:side,before:"Barbarian",after:"Empire",automatic:true,reason:"Accession"}); });
     save();
@@ -2030,6 +2185,7 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
       var names = evolved.map(function(side){ return side === "player" ? (state.playerNation || "プレイヤー") : (state.botNation || "BOT"); });
       alert(names.join("・") + "は帝国に進化しました");
     }
+    if(moveContext && typeof moveContext.afterMove === "function") moveContext.afterMove(true);
   });
 }
 
@@ -2113,7 +2269,7 @@ function openCardDetail(zoneId, uid){
   function render(){
     var html = '<div class="drawer-header"><h2>'+escapeHtml(card.name)+'</h2><button class="close" id="cdClose">✕</button></div>';
     html += '<div class="card-meta" style="margin-bottom:10px;">'+cardMetaLine(card)+'</div>';
-    if(card.cardText) html += '<div class="card-text" style="margin-bottom:12px;">'+escapeHtml(card.cardText)+'</div>';
+    if(card.cardText) html += '<div class="card-text" style="margin-bottom:12px;">'+escapeHtml(displayJapanese(card.cardText))+'</div>';
     ["progressTokens","materialTokens","populationTokens"].forEach(function(k){
       var label = k==="progressTokens"?"進歩トークン":(k==="materialTokens"?"物資トークン":"人口トークン");
       html += '<div class="token-box" style="margin-bottom:8px;"><span>'+label+'</span><button data-c-minus="'+k+'">−</button><span class="n">'+draftTokens[k]+'</span><button data-c-plus="'+k+'">＋</button></div>';
