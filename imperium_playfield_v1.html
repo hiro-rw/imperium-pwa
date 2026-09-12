@@ -1455,7 +1455,7 @@ function renderMarketCards(){
   });
 }
 
-function publishMarketCard(sourceId, destinationId){
+function publishMarketCard(sourceId, destinationId, publishContext){
   var source = state.zones[sourceId];
   var destination = state.zones[destinationId];
   if(!source || !destination || source.cards.length === 0) return false;
@@ -1467,8 +1467,8 @@ function publishMarketCard(sourceId, destinationId){
     moving.push(state.zones.UnrestPile.cards.shift());
     removedLastUnrest = state.zones.UnrestPile.cards.length === 0;
   }
-  // 公開された文明カードには、公開先のカード用進歩トークンを1つ置く。
-  if(card.type === "Civilised") destination.tokens.progress = 1;
+  // 進歩トークンの自動配置はゲーム前の初期セットアップに限る。
+  if(publishContext && publishContext.initialSetup && card.type === "Civilised") destination.tokens.progress = 1;
   applyMove(moving, destinationId, true, sourceId, {
     removedLastUnrest:removedLastUnrest,
     operationSnapshot:snapshot,
@@ -2063,11 +2063,11 @@ function runInitialSetup(){
   });
   shuffleArray(z.MainDeck.cards);
 
-  publishMarketCard("MainDeck", "MainPile1");
-  publishMarketCard("MainDeck", "MainPile2");
-  publishMarketCard("CivilisedDeck", "CivilisedPile");
-  publishMarketCard("UncivilisedDeck", "UncivilisedPile");
-  publishMarketCard("RegionDeck", "RegionPile");
+  publishMarketCard("MainDeck", "MainPile1", {initialSetup:true});
+  publishMarketCard("MainDeck", "MainPile2", {initialSetup:true});
+  publishMarketCard("CivilisedDeck", "CivilisedPile", {initialSetup:true});
+  publishMarketCard("UncivilisedDeck", "UncivilisedPile", {initialSetup:true});
+  publishMarketCard("RegionDeck", "RegionPile", {initialSetup:true});
 
   shuffleArray(z.FameDeck.cards);
   var exiledFame = z.FameDeck.cards.splice(0, 2);
