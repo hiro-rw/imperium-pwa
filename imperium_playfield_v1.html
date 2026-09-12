@@ -70,7 +70,11 @@ header.top h1{display:none;}
 .vp-pill .k{font-size:0.6rem;color:var(--parchment-faint);}
 .vp-pill .v{font-family:var(--serif);font-size:1.15rem;color:var(--gold);}
 .vp-pill button{border:none;background:none;color:var(--parchment-faint);font-size:0.85rem;padding:0 4px;}
-.status-grid{display:grid;grid-template-columns:1fr;gap:6px;margin:0 0 8px;order:1;}
+.bottom-status-scroll{display:flex;gap:8px;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;margin:0 0 8px;order:1;}
+.status-grid{display:grid;grid-template-columns:1fr;gap:6px;margin:0;flex:0 0 100%;scroll-snap-align:start;}
+.player-power-dock{flex:0 0 min(520px,calc(100vw - 32px));display:flex;scroll-snap-align:start;min-width:0;}
+.player-power-dock .player-power-card-slot{width:100%;flex:1;}
+.player-power-dock .hand-card-text{max-height:64px;overflow-y:auto;}
 .area-jump-nav{position:static;z-index:18;display:flex;flex:0 0 auto;gap:4px;padding:4px;background:rgba(64,60,56,0.9);border:1px solid var(--stone-700);border-radius:6px;}
 .area-jump-nav .btn{min-width:48px;min-height:40px;padding:6px 9px;white-space:nowrap;}
 .status-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:10px;display:grid;align-items:stretch;gap:7px;}
@@ -358,6 +362,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
     </div>
     <div class="area-jump-nav"><button class="btn small" id="btnScrollPlayerArea">自分</button><button class="btn small" id="btnScrollMarket">市場</button><button class="btn small" id="btnScrollBotArea">BOT</button></div>
     </div>
+    <div class="bottom-status-scroll">
     <div class="status-grid">
       <section class="status-panel player">
         <div class="status-title" id="playerStatusTitle">自分のトークン</div>
@@ -381,6 +386,8 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
           <div class="bot-action-draw"><button class="btn small primary" id="btnBotActionDraw">アクションドロー</button><input type="number" id="botActionTarget" value="5" min="1" inputmode="numeric" aria-label="BOT ActionDeckの目標枚数"></div>
         </div>
       </section>
+    </div>
+    <div class="player-power-dock" id="playerPowerDock"></div>
     </div>
   </header>
 
@@ -1360,15 +1367,15 @@ function renderZoneRow(elId, owner){
 }
 
 function renderPlayerPowerCard(){
-  var container = document.getElementById("rowPlayer");
-  var historyTile = container.querySelector('[data-zone-id="Pl_History"]');
+  var container = document.getElementById("playerPowerDock");
+  container.innerHTML = "";
   var slot = document.createElement("div");
   slot.className = "player-power-card-slot";
   var zone = state.zones.Pl_Power;
   var card = zone && zone.cards[0];
   if(!card){
     slot.innerHTML = '<div class="zone-tile empty"><div class="lbl">パワーカード</div><div class="cnt">0</div><div class="top">空</div></div>';
-    container.insertBefore(slot, historyTile || null);
+    container.appendChild(slot);
     return;
   }
   var badges = [];
@@ -1383,7 +1390,7 @@ function renderPlayerPowerCard(){
     '<div class="hand-card-text">'+escapeHtml(displayJapanese(card.cardText || ""))+'</div>'+
     '<div class="field-card-actions"><button class="btn small" id="playerPowerDetail">一覧・トークン</button><button class="btn small primary" id="playerPowerMove">このカードを移動</button></div>'+
     '</article>';
-  container.insertBefore(slot, historyTile || null);
+  container.appendChild(slot);
   document.getElementById("playerPowerDetail").addEventListener("click", function(){ openZoneDrawer("Pl_Power"); });
   document.getElementById("playerPowerMove").addEventListener("click", function(){
     openDestPicker(function(destId, toTop){
