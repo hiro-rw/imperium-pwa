@@ -1,10 +1,11 @@
-const CACHE_NAME = "imperium-playfield-v42";
+const CACHE_NAME = "imperium-playfield-v45";
 const APP_SHELL = [
   "./index.html",
   "./imperium_playfield_v1.html",
   "./manifest.webmanifest",
   "./imperium-icon.svg",
-  "./imperium-icon-512.png"
+  "./imperium-icon-512.png",
+  "./Imperium_BotActions.csv"
 ];
 
 self.addEventListener("install", event => {

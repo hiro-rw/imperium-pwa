@@ -62,6 +62,8 @@ select, input[type=text], input[type=number]{
 header.top{position:sticky;top:0;z-index:15;background:var(--stone-850);border-bottom:1px solid var(--stone-700);padding:8px 16px;}
 .top-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 header.top h1{font-size:1rem;flex:1;min-width:140px;}
+.top-scroll-nav{display:flex;gap:4px;flex-wrap:nowrap;}
+.top-scroll-nav .btn{white-space:nowrap;min-height:34px;padding-left:8px;padding-right:8px;}
 .vp-pill{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:4px;padding:6px 12px;text-align:center;min-width:76px;}
 .vp-pill .k{font-size:0.6rem;color:var(--parchment-faint);}
 .vp-pill .v{font-family:var(--serif);font-size:1.15rem;color:var(--gold);}
@@ -307,6 +309,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
       <h2>IMPERIUM プレイフィールド</h2>
       <p class="helptext">CSVを読み込んで対戦をセットアップします。市場カードのCSVと、使用する国家のCSVをまとめて選んでください（複数選択可）。</p>
       <input type="file" id="csvInput" accept=".csv" multiple>
+      <div class="helptext" id="botActionSummary">BOTアクションを読み込み中...</div>
       <div id="fileSummary"></div>
     </div>
 
@@ -338,6 +341,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
   <header class="top">
     <div class="top-main">
     <h1>IMPERIUM <span id="matchLabel" style="color:var(--parchment-faint);font-size:0.75rem;"></span></h1>
+    <div class="top-scroll-nav"><button class="btn small" id="btnScrollPlayerArea">プレイヤーエリア</button><button class="btn small" id="btnScrollMarket">市場</button><button class="btn small" id="btnScrollBotArea">BOTエリア</button></div>
     <div class="vp-pill">
       <div class="k">ターン</div>
       <div class="v"><button id="turnMinus">−</button><span id="turnVal">0</span><button id="turnPlus">＋</button></div>
@@ -394,7 +398,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
   <div class="section-title player field-section-title"><span>自分の配置領域</span><span class="field-symbol-counts" id="playerFieldSymbols"></span></div>
   <div class="field-board-row" id="playerFieldBoard"></div>
 
-  <div class="section-title">市場</div>
+  <div class="section-title" id="labelMarketSection">市場</div>
   <div class="shared-board-scroll">
     <div class="shared-zone-row shared-special-row" id="rowSharedBottom"></div>
     <div class="shared-zone-row" id="rowSharedTop"></div>
@@ -511,6 +515,7 @@ var ZONE_DEFS = buildZoneDefs();
 var uidCounter = 1;
 var state = null; // set on start/resume
 var rawRows = []; // parsed CSV rows before game start
+var botActionRows = []; // shared BOT action reference data
 var undoStack = []; // session-only snapshots; newest item is last
 var UNDO_LIMIT = 10;
 
@@ -747,6 +752,7 @@ function makeCard(row){
    ============================================================ */
 var csvInput = document.getElementById("csvInput");
 var fileSummary = document.getElementById("fileSummary");
+var botActionSummary = document.getElementById("botActionSummary");
 var nationSelectPanel = document.getElementById("nationSelectPanel");
 var selPlayerNation = document.getElementById("selPlayerNation");
 var selBotNation = document.getElementById("selBotNation");
@@ -759,6 +765,21 @@ function readFileText(file){
     reader.readAsText(file, "UTF-8");
   });
 }
+
+function setBotActionRows(rows, sourceLabel){
+  botActionRows = (rows || []).filter(function(row){ return row.initialZone === "ActionPile"; });
+  botActionSummary.textContent = sourceLabel + "：" + botActionRows.length + "件";
+}
+
+fetch("./Imperium_BotActions.csv")
+  .then(function(response){
+    if(!response.ok) throw new Error("HTTP " + response.status);
+    return response.text();
+  })
+  .then(function(text){ setBotActionRows(rowsToObjects(parseCSV(text)), "BOTアクション自動読込済み"); })
+  .catch(function(){
+    botActionSummary.textContent = "BOTアクションを自動読込できませんでした。Imperium_BotActions.csvもファイル選択してください。";
+  });
 
 csvInput.addEventListener("change", function(e){
   var files = Array.from(e.target.files || []);
@@ -780,7 +801,8 @@ csvInput.addEventListener("change", function(e){
         html += '<div class="row err">'+escapeHtml(r.name)+' — 読み込みエラー</div>';
       } else {
         html += '<div class="row"><span>'+escapeHtml(r.name)+'</span><span>'+r.count+'行</span></div>';
-        rawRows = rawRows.concat(r.rows);
+        if(r.name.toLowerCase() === "imperium_botactions.csv") setBotActionRows(r.rows, "BOTアクション選択済み");
+        else rawRows = rawRows.concat(r.rows);
       }
     });
     fileSummary.innerHTML = html;
@@ -817,10 +839,14 @@ document.getElementById("btnStartGame").addEventListener("click", function(){
 
   state = freshState(playerNation, botNation);
   var loadedCount = 0, skipped = 0;
+  var selectedBotActions = botActionRows.filter(function(row){ return row.nation === botNation; });
+  if(selectedBotActions.length === 0){
+    selectedBotActions = rawRows.filter(function(row){ return row.initialZone === "ActionPile" && row.nation === botNation; });
+  }
+  selectedBotActions.forEach(function(row){ state.botActions.push(makeCard(row)); loadedCount++; });
   rawRows.forEach(function(row){
     if(!row.initialZone) { skipped++; return; }
     if(row.initialZone === "ActionPile"){
-      if(row.nation === botNation){ state.botActions.push(makeCard(row)); loadedCount++; }
       return;
     }
     if(row.initialZone === "State") return;
@@ -1224,6 +1250,19 @@ document.getElementById("btnStartBotTurn").addEventListener("click", function(){
 
 document.getElementById("btnUndo").addEventListener("click", undoLastOperation);
 document.getElementById("btnExportLog").addEventListener("click", exportOperationLog);
+
+function scrollToBoardSection(elementId){
+  var target = document.getElementById(elementId);
+  if(!target) return;
+  var header = document.querySelector("header.top");
+  var headerHeight = header ? header.getBoundingClientRect().height : 0;
+  var targetTop = window.pageYOffset + target.getBoundingClientRect().top - headerHeight - 8;
+  window.scrollTo({top:Math.max(0, targetTop), behavior:"smooth"});
+}
+
+document.getElementById("btnScrollPlayerArea").addEventListener("click", function(){ scrollToBoardSection("labelPlayerSection"); });
+document.getElementById("btnScrollMarket").addEventListener("click", function(){ scrollToBoardSection("labelMarketSection"); });
+document.getElementById("btnScrollBotArea").addEventListener("click", function(){ scrollToBoardSection("labelBotSection"); });
 
 document.getElementById("btnDrawOne").addEventListener("click", function(){
   var deck = state.zones.Pl_DrawDeck;
