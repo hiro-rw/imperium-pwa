@@ -1,4 +1,4 @@
-const CACHE_NAME = "imperium-playfield-v46";
+const CACHE_NAME = "imperium-playfield-v47";
 const APP_SHELL = [
   "./index.html",
   "./imperium_playfield_v1.html",

@@ -60,10 +60,10 @@ select, input[type=text], input[type=number]{
 
 /* ---------- board header ---------- */
 header.top{position:sticky;top:0;z-index:15;background:var(--stone-850);border-bottom:1px solid var(--stone-700);padding:8px 16px;}
-.top-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.top-main{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0;}
 header.top h1{font-size:1rem;flex:1;min-width:140px;}
-.top-scroll-nav{display:flex;gap:4px;flex-wrap:nowrap;}
-.top-scroll-nav .btn{white-space:nowrap;min-height:34px;padding-left:8px;padding-right:8px;}
+.top-button-scroll{display:flex;gap:5px;flex:2;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;}
+.top-button-scroll .btn{flex:0 0 auto;white-space:nowrap;min-height:34px;padding-left:8px;padding-right:8px;}
 .vp-pill{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:4px;padding:6px 12px;text-align:center;min-width:76px;}
 .vp-pill .k{font-size:0.6rem;color:var(--parchment-faint);}
 .vp-pill .v{font-family:var(--serif);font-size:1.15rem;color:var(--gold);}
@@ -341,16 +341,20 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
   <header class="top">
     <div class="top-main">
     <h1>IMPERIUM <span id="matchLabel" style="color:var(--parchment-faint);font-size:0.75rem;"></span></h1>
-    <div class="top-scroll-nav"><button class="btn small" id="btnScrollPlayerArea">プレイヤーエリア</button><button class="btn small" id="btnScrollMarket">市場</button><button class="btn small" id="btnScrollBotArea">BOTエリア</button></div>
+    <div class="top-button-scroll">
+      <button class="btn small" id="btnScrollPlayerArea">プレイヤーエリア</button>
+      <button class="btn small" id="btnScrollMarket">市場</button>
+      <button class="btn small" id="btnScrollBotArea">BOTエリア</button>
+      <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
+      <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
+      <button class="btn small" id="btnUndo" disabled>1手戻す</button>
+      <button class="btn small" id="btnScore">集計</button>
+      <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
+    </div>
     <div class="vp-pill">
       <div class="k">ターン</div>
       <div class="v"><span id="turnVal">0</span></div>
     </div>
-    <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
-    <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
-    <button class="btn small" id="btnUndo" disabled>1手戻す</button>
-    <button class="btn small" id="btnScore">集計</button>
-    <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
     </div>
     <div class="status-grid">
       <section class="status-panel player">
