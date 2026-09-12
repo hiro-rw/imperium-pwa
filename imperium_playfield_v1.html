@@ -1087,16 +1087,26 @@ function renderScoreWindow(){
       '<label><span class="helptext">VP</span><input type="number" data-score-manual="'+item.card.uid+'" value="'+manualVp(item.card)+'"></label></div>';
   });
 
-  var fieldEntries = [];
-  function addFieldCard(card){ fieldEntries.push(card); (card.garrison || []).forEach(addFieldCard); }
-  state.zones.Pl_Field.cards.forEach(addFieldCard);
+  var controlledCards = state.zones.Pl_Field.cards || [];
+  var nonRegionControlledCount = controlledCards.filter(function(card){ return card.type !== "Region"; }).length;
+  var symbolCounts = {};
+  SYMBOL_TYPES.forEach(function(symbol){ symbolCounts[symbol] = 0; });
+  player.entries.forEach(function(entry){
+    (entry.card.symbols || []).forEach(function(symbol){
+      if(Object.prototype.hasOwnProperty.call(symbolCounts, symbol)) symbolCounts[symbol]++;
+    });
+  });
   function countType(type){ return player.entries.filter(function(e){ return e.card.type === type; }).length; }
   html += '<div class="score-section-title">プレイヤーの所持カード確認</div>';
   html += '<table class="score-table"><tbody>'+
     '<tr><td>物資トークン数</td><td>'+state.resources.player.material+'</td><td>人口トークン数</td><td>'+state.resources.player.population+'</td></tr>'+
     '<tr><td>所持文明カード数</td><td>'+countType("Civilised")+'</td><td>所持未開カード数</td><td>'+countType("Uncivilised")+'</td></tr>'+
     '<tr><td>所持領地カード数</td><td>'+countType("Region")+'</td><td>所持属州カード数</td><td>'+countType("Tributary")+'</td></tr>'+
-    '<tr><td>総カード枚数</td><td>'+player.entries.length+'</td><td>配置領域の領地以外</td><td>'+fieldEntries.filter(function(card){ return card.type !== "Region"; }).length+'</td></tr>'+
+    '<tr><td>総カード枚数</td><td>'+player.entries.length+'</td><td>領地以外の支配カード</td><td>'+nonRegionControlledCount+'</td></tr>'+
+    '<tr><td>麦</td><td>'+symbolCounts["麦"]+'</td><td>袋</td><td>'+symbolCounts["袋"]+'</td></tr>'+
+    '<tr><td>水</td><td>'+symbolCounts["水"]+'</td><td>都市</td><td>'+symbolCounts["都市"]+'</td></tr>'+
+    '<tr><td>大都市</td><td>'+symbolCounts["大都市"]+'</td><td>仮面</td><td>'+symbolCounts["仮面"]+'</td></tr>'+
+    '<tr><td>兜</td><td>'+symbolCounts["兜"]+'</td><td></td><td></td></tr>'+
     '</tbody></table>';
 
   scoreDrawer.innerHTML = html;
