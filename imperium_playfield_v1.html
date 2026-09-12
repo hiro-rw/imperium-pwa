@@ -344,15 +344,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
     <div class="top-scroll-nav"><button class="btn small" id="btnScrollPlayerArea">プレイヤーエリア</button><button class="btn small" id="btnScrollMarket">市場</button><button class="btn small" id="btnScrollBotArea">BOTエリア</button></div>
     <div class="vp-pill">
       <div class="k">ターン</div>
-      <div class="v"><button id="turnMinus">−</button><span id="turnVal">0</span><button id="turnPlus">＋</button></div>
-    </div>
-    <div class="vp-pill">
-      <div class="k">自分 VP</div>
-      <div class="v"><button id="pvpMinus">−</button><span id="pvpVal">0</span><button id="pvpPlus">＋</button></div>
-    </div>
-    <div class="vp-pill">
-      <div class="k">BOT VP</div>
-      <div class="v"><button id="bvpMinus">−</button><span id="bvpVal">0</span><button id="bvpPlus">＋</button></div>
+      <div class="v"><span id="turnVal">0</span></div>
     </div>
     <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
     <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
@@ -922,7 +914,6 @@ function zoneOrderFor(owner){
 
 function renderBoard(){
   renderTurn();
-  renderVP();
   renderResources();
   renderBotDie();
   renderZoneRow("rowPlayer", "player");
@@ -961,13 +952,8 @@ function renderBotFieldPile(){
   container.appendChild(button);
 }
 
-function renderVP(){
-  document.getElementById("pvpVal").textContent = state.vp.player;
-  document.getElementById("bvpVal").textContent = state.vp.bot;
-}
 function renderTurn(){
   document.getElementById("turnVal").textContent = state.turn;
-  document.getElementById("turnMinus").disabled = state.turn <= 0;
   var list = document.getElementById("turnHistoryList");
   if(!list) return;
   if(state.turnHistory.length === 0){
@@ -981,13 +967,6 @@ function renderTurn(){
     return '<span class="turn-history-entry">T'+entry.turn+' '+escapeHtml(side)+'：'+from+' → '+to+'</span>';
   }).join("");
 }
-document.getElementById("turnMinus").addEventListener("click", function(){ var before=state.turn; beginOperation("turn_change",{before:before,after:Math.max(0,before-1),delta:-1}); state.turn = Math.max(0, state.turn-1); save(); renderTurn(); });
-document.getElementById("turnPlus").addEventListener("click", function(){ var before=state.turn; beginOperation("turn_change",{before:before,after:before+1,delta:1}); state.turn++; save(); renderTurn(); });
-document.getElementById("pvpMinus").addEventListener("click", function(){ var before=state.vp.player; beginOperation("vp_change",{side:"player",before:before,after:before-1,delta:-1}); state.vp.player--; save(); renderVP(); });
-document.getElementById("pvpPlus").addEventListener("click", function(){ var before=state.vp.player; beginOperation("vp_change",{side:"player",before:before,after:before+1,delta:1}); state.vp.player++; save(); renderVP(); });
-document.getElementById("bvpMinus").addEventListener("click", function(){ var before=state.vp.bot; beginOperation("vp_change",{side:"bot",before:before,after:before-1,delta:-1}); state.vp.bot--; save(); renderVP(); });
-document.getElementById("bvpPlus").addEventListener("click", function(){ var before=state.vp.bot; beginOperation("vp_change",{side:"bot",before:before,after:before+1,delta:1}); state.vp.bot++; save(); renderVP(); });
-
 /* ============================================================
    SCORE SUMMARY
    ============================================================ */
@@ -2098,7 +2077,7 @@ function doSearch(deckZone, type){
     var who = confirm("見つかりませんでした。VP+2を「プレイヤー」に加えますか？（キャンセルでBOTに加算）") ? "player" : "bot";
     beginOperation("search_miss", {zone:currentZoneId, searchType:type, vpSide:who, vpDelta:2});
     state.vp[who] += 2;
-    save(); renderVP();
+    save();
     alert((who==="player"?"プレイヤー":"BOT")+"のVPに+2しました");
     return;
   }
