@@ -5,21 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#37332E">
+<meta name="theme-color" content="#322F2C">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./imperium-icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./imperium-icon-512.png">
 <title>IMPERIUM プレイフィールド</title>
 <style>
 :root{
-  --stone-900:#302D29; --stone-850:#37332E; --stone-800:#403B35; --stone-750:#4A443C;
-  --stone-700:#554E45; --stone-600:#665E53; --stone-500:#786F61;
-  --parchment:#F4EDDD; --parchment-dim:#D0C6B3; --parchment-faint:#AFA591;
+  --stone-900:#282522; --stone-850:#322F2C; --stone-800:#403C38; --stone-750:#4C4742;
+  --stone-700:#625C56; --stone-600:#7B746C; --stone-500:#8D857C;
+  --parchment:#FFFDF8; --parchment-dim:#E4E7EA; --parchment-faint:#B9C1C8;
   --verdigris:#7FA189; --verdigris-dim:#5C7A66;
   --oxblood:#B1544A; --oxblood-dim:#8A423A;
-  --gold:#C9A227;
+  --gold:#F0CD62;
   --serif: Georgia,'Iowan Old Style','Hiragino Mincho ProN',serif;
-  --sans: -apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic','Helvetica Neue',Arial,sans-serif;
+  --sans: -apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI','Yu Gothic',Meiryo,'Helvetica Neue',Arial,sans-serif;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;height:100%;background:var(--stone-900);color:var(--parchment);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
@@ -72,8 +72,8 @@ header.top h1{font-size:1rem;flex:1;min-width:140px;}
 .status-panel.bot{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(100px,0.8fr) minmax(300px,2.2fr);}
 .status-panel.player{border-left:3px solid var(--verdigris);}
 .status-panel.bot{border-left:3px solid var(--oxblood);}
-.status-panel.state-barbarian{border-left-color:#b95850;background:linear-gradient(90deg,rgba(185,88,80,0.18),rgba(64,59,53,0.96));}
-.status-panel.state-empire{border-left-color:#5f91c9;background:linear-gradient(90deg,rgba(95,145,201,0.18),rgba(64,59,53,0.96));}
+.status-panel.state-barbarian{border-left-color:#b95850;background:linear-gradient(90deg,rgba(185,88,80,0.18),rgba(64,60,56,0.96));}
+.status-panel.state-empire{border-left-color:#5f91c9;background:linear-gradient(90deg,rgba(95,145,201,0.18),rgba(64,60,56,0.96));}
 .status-title{font-family:var(--serif);font-size:0.85rem;margin-bottom:8px;color:var(--parchment-dim);}
 header.top .status-panel{padding:6px 8px;}
 header.top .status-title{font-size:0.72rem;margin:0;display:flex;align-items:center;}
@@ -174,12 +174,12 @@ header.top .dice-result{width:34px;height:34px;font-size:1.25rem;}
 .field-card.card-type-unrest{border-top-color:#bd5b55;background:rgba(189,91,85,0.09);}
 .field-card.card-type-neutral{border-top-color:#aaa397;background:#454039;}
 .field-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
-.field-card-name{font-family:var(--serif);font-size:0.95rem;line-height:1.25;}
+.field-card-name{font-family:var(--sans);font-size:1rem;font-weight:600;line-height:1.35;letter-spacing:0.02em;}
 .field-card-status{font-size:0.67rem;color:var(--parchment-faint);}
 .field-card.exhausted .field-card-status{color:var(--oxblood);}
 .field-garrison{border-left:2px solid var(--stone-600);padding-left:8px;font-size:0.72rem;color:var(--parchment-dim);line-height:1.45;min-height:2.9em;}
 .field-garrison strong{display:block;font-weight:400;color:var(--parchment-faint);font-size:0.64rem;margin-bottom:2px;}
-.hand-card-text{font-size:0.73rem;line-height:1.5;color:var(--parchment-dim);white-space:pre-wrap;max-height:8em;overflow-y:auto;}
+.hand-card-text{font-family:var(--sans);font-size:0.88rem;font-weight:500;line-height:1.65;color:var(--parchment-dim);white-space:pre-wrap;max-height:8em;overflow-y:auto;}
 .card-token-badges{display:flex;gap:5px;flex-wrap:wrap;min-height:20px;}
 .card-token-badge{background:var(--stone-900);border:1px solid var(--stone-600);border-radius:10px;padding:2px 7px;font-size:0.65rem;color:var(--parchment-dim);}
 .card-token-badge.exhaustion{border-color:var(--oxblood);color:var(--oxblood);}
@@ -226,8 +226,10 @@ ul.card-list li.selected{border-color:var(--gold);background:rgba(201,162,39,0.0
 .card-meta .state-empire{color:#6ca6df;font-weight:600;}
 .card-meta .card-flag{color:var(--parchment);font-size:0.82rem;line-height:1;}
 .card-icons{font-size:0.7rem;color:var(--parchment-dim);}
-.card-text{font-size:0.75rem;color:var(--parchment-dim);margin-top:5px;line-height:1.5;}
+.card-text{font-family:var(--sans);font-size:0.88rem;font-weight:500;color:var(--parchment-dim);margin-top:5px;line-height:1.65;}
 .card-detail-btn{background:none;border:none;color:var(--parchment-faint);font-size:0.9rem;padding:2px 6px;}
+.section-title,.drawer-header h2{font-family:var(--sans);font-weight:600;letter-spacing:0.02em;}
+.bot-action-result .result-text{font-family:var(--sans);font-size:0.88rem;font-weight:500;line-height:1.65;color:var(--parchment-dim);}
 .garrison-box{margin-top:8px;padding:8px;border-left:2px solid var(--stone-600);}
 .garrison-box .gh{font-size:0.65rem;color:var(--parchment-faint);margin-bottom:5px;}
 ul.card-list li.card-type-civilised{border-left:4px solid #e8e4d8;background:rgba(232,228,216,0.05);}
@@ -351,7 +353,6 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
     <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
     <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
     <button class="btn small" id="btnUndo" disabled>1手戻す</button>
-    <button class="btn small primary" id="btnInitialSetup">初期セットアップ</button>
     <button class="btn small" id="btnScore">集計</button>
     <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
     </div>
@@ -838,7 +839,8 @@ document.getElementById("btnStartGame").addEventListener("click", function(){
     state.zones[zoneId].cards.push(makeCard(row));
     loadedCount++;
   });
-  save();
+  beginOperation("initial_setup", {trigger:"match_start"});
+  runInitialSetup();
   console.log("Loaded cards:", loadedCount, "skipped:", skipped);
   showBoard();
 });
@@ -895,7 +897,6 @@ function zoneOrderFor(owner){
 function renderBoard(){
   renderTurn();
   renderVP();
-  renderSetupButton();
   renderResources();
   renderBotDie();
   renderZoneRow("rowPlayer", "player");
@@ -960,20 +961,6 @@ document.getElementById("pvpMinus").addEventListener("click", function(){ var be
 document.getElementById("pvpPlus").addEventListener("click", function(){ var before=state.vp.player; beginOperation("vp_change",{side:"player",before:before,after:before+1,delta:1}); state.vp.player++; save(); renderVP(); });
 document.getElementById("bvpMinus").addEventListener("click", function(){ var before=state.vp.bot; beginOperation("vp_change",{side:"bot",before:before,after:before-1,delta:-1}); state.vp.bot--; save(); renderVP(); });
 document.getElementById("bvpPlus").addEventListener("click", function(){ var before=state.vp.bot; beginOperation("vp_change",{side:"bot",before:before,after:before+1,delta:1}); state.vp.bot++; save(); renderVP(); });
-
-function renderSetupButton(){
-  var btn = document.getElementById("btnInitialSetup");
-  btn.disabled = !!state.setupCompleted;
-  btn.textContent = state.setupCompleted ? "セットアップ済み" : "初期セットアップ";
-}
-
-document.getElementById("btnInitialSetup").addEventListener("click", function(){
-  if(state.setupCompleted) return;
-  if(!confirm("各デッキをシャッフル・移動し、初期トークンを設定します。実行しますか？")) return;
-  beginOperation("initial_setup", {});
-  runInitialSetup();
-  alert("初期セットアップが完了しました");
-});
 
 /* ============================================================
    SCORE SUMMARY
@@ -1400,16 +1387,7 @@ function renderMarketCards(){
   container.querySelectorAll("[data-market-publish-from]").forEach(function(el){
     el.addEventListener("click", function(){
       var sourceId = el.getAttribute("data-market-publish-from");
-      if(state.zones[sourceId].cards.length === 0) return;
-      var snapshot = operationSnapshot();
-      var card = state.zones[sourceId].cards.shift();
-      var moving = [card];
-      var removedLastUnrest = false;
-      if(card.type !== "Region" && state.zones.UnrestPile.cards.length > 0){
-        moving.push(state.zones.UnrestPile.cards.shift());
-        removedLastUnrest = state.zones.UnrestPile.cards.length === 0;
-      }
-      applyMove(moving, el.getAttribute("data-market-publish-to"), true, sourceId, {removedLastUnrest:removedLastUnrest,operationSnapshot:snapshot});
+      publishMarketCard(sourceId, el.getAttribute("data-market-publish-to"));
     });
   });
   container.querySelectorAll("[data-market-detail]").forEach(function(el){
@@ -1429,6 +1407,28 @@ function renderMarketCards(){
       }, zoneId);
     });
   });
+}
+
+function publishMarketCard(sourceId, destinationId){
+  var source = state.zones[sourceId];
+  var destination = state.zones[destinationId];
+  if(!source || !destination || source.cards.length === 0) return false;
+  var snapshot = operationSnapshot();
+  var card = source.cards.shift();
+  var moving = [card];
+  var removedLastUnrest = false;
+  if(card.type !== "Region" && state.zones.UnrestPile.cards.length > 0){
+    moving.push(state.zones.UnrestPile.cards.shift());
+    removedLastUnrest = state.zones.UnrestPile.cards.length === 0;
+  }
+  // 公開された文明カードには、公開先のカード用進歩トークンを1つ置く。
+  if(card.type === "Civilised") destination.tokens.progress = 1;
+  applyMove(moving, destinationId, true, sourceId, {
+    removedLastUnrest:removedLastUnrest,
+    operationSnapshot:snapshot,
+    directAction:"market_publish"
+  });
+  return true;
 }
 
 function renderZoneIds(elId, ids){
@@ -2017,6 +2017,12 @@ function runInitialSetup(){
   });
   shuffleArray(z.MainDeck.cards);
 
+  publishMarketCard("MainDeck", "MainPile1");
+  publishMarketCard("MainDeck", "MainPile2");
+  publishMarketCard("CivilisedDeck", "CivilisedPile");
+  publishMarketCard("UncivilisedDeck", "UncivilisedPile");
+  publishMarketCard("RegionDeck", "RegionPile");
+
   shuffleArray(z.FameDeck.cards);
   var exiledFame = z.FameDeck.cards.splice(0, 2);
   z.ExilePile.cards = exiledFame.concat(z.ExilePile.cards);
@@ -2158,7 +2164,9 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
     var evolved = [];
     separatedCards.forEach(function(card){
       var side = destId === "Pl_Pile" ? "player" : (destId === "Bot_Pile" ? "bot" : null);
-      if(side && card.type === "Accession" && changeCivilisationState(side, "Empire")) evolved.push(side);
+      // 継承・国家・発展の所属はカード種別ではなく初期配置先で判定する。
+      // 継承カード自体が領地などの type を持つ場合にも、自動帝国化を適用する。
+      if(side && card.initialZone === "Accession" && changeCivilisationState(side, "Empire")) evolved.push(side);
     });
     var movedCardsForLog = separatedCards.map(function(card){ return {uid:card.uid,cardNo:card.cardNo,name:card.name,type:card.type}; });
     var moveActor = sourceId && sourceId.indexOf("Pl_") === 0 ? "player" : (sourceId && sourceId.indexOf("Bot_") === 0 ? "bot" : (state.phase || "setup"));
