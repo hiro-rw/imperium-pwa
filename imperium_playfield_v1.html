@@ -30,6 +30,7 @@ h1,h2,h3{font-family:var(--serif); font-weight:400; margin:0;}
 
 /* ---------- layout shells ---------- */
 #setupScreen, #boardScreen{min-height:100%;}
+#boardScreen{padding-bottom:calc(var(--bottom-dock-height, 0px) + 8px);}
 .wrap{max-width:1100px;margin:0 auto;padding:14px 16px 60px;}
 
 .card-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:14px 16px;margin-bottom:14px;}
@@ -59,16 +60,19 @@ select, input[type=text], input[type=number]{
 .field select{width:100%;}
 
 /* ---------- board header ---------- */
-header.top{position:sticky;top:0;z-index:15;background:var(--stone-850);border-bottom:1px solid var(--stone-700);padding:8px 16px;}
-.top-main{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0;}
-header.top h1{font-size:1rem;flex:1;min-width:140px;}
-.top-button-scroll{display:flex;gap:5px;flex:2;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;}
+header.top{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--stone-850);border-top:1px solid var(--stone-700);padding:8px 16px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;}
+.top-main{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0;order:2;}
+header.top h1{display:none;}
+.top-button-scroll{display:flex;gap:5px;flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;}
 .top-button-scroll .btn{flex:0 0 auto;white-space:nowrap;min-height:34px;padding-left:8px;padding-right:8px;}
+.top-button-scroll .vp-pill{flex:0 0 auto;}
 .vp-pill{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:4px;padding:6px 12px;text-align:center;min-width:76px;}
 .vp-pill .k{font-size:0.6rem;color:var(--parchment-faint);}
 .vp-pill .v{font-family:var(--serif);font-size:1.15rem;color:var(--gold);}
 .vp-pill button{border:none;background:none;color:var(--parchment-faint);font-size:0.85rem;padding:0 4px;}
-.status-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;}
+.status-grid{display:grid;grid-template-columns:1fr;gap:6px;margin:0 0 8px;order:1;}
+.area-jump-nav{position:static;z-index:18;display:flex;flex:0 0 auto;gap:4px;padding:4px;background:rgba(64,60,56,0.9);border:1px solid var(--stone-700);border-radius:6px;}
+.area-jump-nav .btn{min-width:48px;min-height:40px;padding:6px 9px;white-space:nowrap;}
 .status-panel{background:var(--stone-800);border:1px solid var(--stone-700);border-radius:6px;padding:10px;display:grid;align-items:stretch;gap:7px;}
 .status-panel.player{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(300px,2.2fr);}
 .status-panel.bot{grid-template-columns:minmax(88px,0.7fr) minmax(330px,3fr) minmax(100px,0.8fr) minmax(300px,2.2fr);}
@@ -342,19 +346,17 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
     <div class="top-main">
     <h1>IMPERIUM <span id="matchLabel" style="color:var(--parchment-faint);font-size:0.75rem;"></span></h1>
     <div class="top-button-scroll">
-      <button class="btn small" id="btnScrollPlayerArea">プレイヤーエリア</button>
-      <button class="btn small" id="btnScrollMarket">市場</button>
-      <button class="btn small" id="btnScrollBotArea">BOTエリア</button>
       <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
       <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
       <button class="btn small" id="btnUndo" disabled>1手戻す</button>
       <button class="btn small" id="btnScore">集計</button>
       <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
+      <div class="vp-pill">
+        <div class="k">ターン</div>
+        <div class="v"><span id="turnVal">0</span></div>
+      </div>
     </div>
-    <div class="vp-pill">
-      <div class="k">ターン</div>
-      <div class="v"><span id="turnVal">0</span></div>
-    </div>
+    <div class="area-jump-nav"><button class="btn small" id="btnScrollPlayerArea">自分</button><button class="btn small" id="btnScrollMarket">市場</button><button class="btn small" id="btnScrollBotArea">BOT</button></div>
     </div>
     <div class="status-grid">
       <section class="status-panel player">
@@ -893,7 +895,19 @@ function showBoard(){
   document.getElementById("playerStatusTitle").textContent = (state.playerNation || "自分") + "のトークン";
   document.getElementById("botStatusTitle").textContent = (state.botNation || "BOT") + "のトークン／アクション";
   renderBoard();
+  requestAnimationFrame(syncBottomDockHeight);
 }
+
+function syncBottomDockHeight(){
+  var board = document.getElementById("boardScreen");
+  var dock = document.querySelector("header.top");
+  if(board && dock) board.style.setProperty("--bottom-dock-height", dock.offsetHeight + "px");
+}
+
+if(typeof ResizeObserver !== "undefined"){
+  new ResizeObserver(syncBottomDockHeight).observe(document.querySelector("header.top"));
+}
+window.addEventListener("resize", syncBottomDockHeight);
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, function(c){
@@ -1177,6 +1191,7 @@ function openTurnActionDialog(){
     '<button class="btn primary" data-turn-action="activate"><strong>発動</strong><span>アクショントークンを3にする</span></button>' +
     '<button class="btn" data-turn-action="innovate"><strong>革新</strong><span>アクショントークンを0にし、手札をすべて捨てる</span></button>' +
     '<button class="btn" data-turn-action="revolt"><strong>反乱</strong><span>アクショントークンを0にし、手札の不穏をすべて戻す</span></button>' +
+    '<button class="btn danger" data-turn-action="cancel"><strong>キャンセル</strong><span>ターン開始前の状態へ戻す</span></button>' +
     '</div>';
   turnStartOverlay.classList.remove("hidden");
   turnStartDrawer.querySelectorAll("[data-turn-action]").forEach(function(button){
@@ -1186,6 +1201,10 @@ function openTurnActionDialog(){
 
 function resolveTurnAction(action){
   turnStartOverlay.classList.add("hidden");
+  if(action === "cancel"){
+    undoLastOperation();
+    return;
+  }
   var actionSnapshot = operationSnapshot();
   if(action === "activate"){
     commitOperation(actionSnapshot, "player_action_selected", {action:action});
@@ -1237,9 +1256,7 @@ document.getElementById("btnExportLog").addEventListener("click", exportOperatio
 function scrollToBoardSection(elementId){
   var target = document.getElementById(elementId);
   if(!target) return;
-  var header = document.querySelector("header.top");
-  var headerHeight = header ? header.getBoundingClientRect().height : 0;
-  var targetTop = window.pageYOffset + target.getBoundingClientRect().top - headerHeight - 8;
+  var targetTop = window.pageYOffset + target.getBoundingClientRect().top - 8;
   window.scrollTo({top:Math.max(0, targetTop), behavior:"smooth"});
 }
 
