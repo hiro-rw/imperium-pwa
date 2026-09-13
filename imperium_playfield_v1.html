@@ -351,7 +351,6 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
     <h1>IMPERIUM <span id="matchLabel" style="color:var(--parchment-faint);font-size:0.75rem;"></span></h1>
     <div class="top-button-scroll">
       <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
-      <button class="btn small primary" id="btnStartBotTurn">BOT開始</button>
       <button class="btn small" id="btnUndo" disabled>1手戻す</button>
       <button class="btn small" id="btnScore">集計</button>
       <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
@@ -382,7 +381,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
         </div>
         <div class="status-action-grid bot-actions">
           <div class="state-control-row" id="botStateControls"></div>
-          <div class="quick-action-row"><button class="btn small" id="btnBotDiscardOne">1枚破棄</button></div>
+          <div class="quick-action-row"><button class="btn small primary" id="btnConfirmPlayerEnd">終了確認</button><button class="btn small" id="btnBotDiscardOne">1枚破棄</button></div>
           <div class="bot-action-draw"><button class="btn small primary" id="btnBotActionDraw">アクションドロー</button><input type="number" id="botActionTarget" value="5" min="1" inputmode="numeric" aria-label="BOT ActionDeckの目標枚数"></div>
         </div>
       </section>
@@ -550,7 +549,8 @@ function freshState(playerNation, botNation){
     operationLog: [],
     operationSeq: 0,
     gameId: "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8),
-    botActionTarget: 5
+    botActionTarget: 5,
+    botActionDrawPending: false
   };
 }
 
@@ -580,12 +580,13 @@ function ensureStateDefaults(s){
   if(typeof s.turn !== "number" || s.turn < 0) s.turn = 0;
   if(!Array.isArray(s.turnHistory)) s.turnHistory = [];
   if(!s.scoringManual || typeof s.scoringManual !== "object") s.scoringManual = {};
-  if(s.phase !== "player" && s.phase !== "bot" && s.phase !== "setup") s.phase = "setup";
+  if(s.phase !== "player" && s.phase !== "player_end_confirmed" && s.phase !== "bot" && s.phase !== "setup") s.phase = "setup";
   if(!Array.isArray(s.operationLog)) s.operationLog = [];
   if(typeof s.operationSeq !== "number") s.operationSeq = s.operationLog.length;
   if(!s.gameId) s.gameId = "game-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
   if(typeof s.botActionTarget !== "number" || !isFinite(s.botActionTarget)) s.botActionTarget = 5;
   s.botActionTarget = Math.max(1, Math.floor(s.botActionTarget));
+  if(typeof s.botActionDrawPending !== "boolean") s.botActionDrawPending = false;
   Object.keys(s.zones || {}).forEach(function(id){
     var zone = s.zones[id];
     if(!zone.tokens) zone.tokens = {};
@@ -639,9 +640,12 @@ function appendOperationLog(eventType, detail){
 }
 
 function commitOperation(snapshot, eventType, detail){
-  undoStack.push(snapshot || operationSnapshot());
+  var entry = appendOperationLog(eventType, detail);
+  undoStack.push({
+    snapshot:snapshot || operationSnapshot(),
+    event:JSON.parse(JSON.stringify(entry))
+  });
   if(undoStack.length > UNDO_LIMIT) undoStack.shift();
-  appendOperationLog(eventType, detail);
   renderUndoButton();
 }
 
@@ -658,18 +662,26 @@ function undoLastOperation(){
   if(undoStack.length === 0) return;
   var log = state.operationLog || [];
   var seq = state.operationSeq || log.length;
-  var snapshot = undoStack.pop();
+  var undoItem = undoStack.pop();
+  var snapshot = undoItem && undoItem.snapshot ? undoItem.snapshot : undoItem;
+  var revertedEvent = undoItem && undoItem.event ? undoItem.event : null;
   state = ensureStateDefaults(snapshot);
   state.operationLog = log;
   state.operationSeq = seq;
-  appendOperationLog("undo", {remainingUndo:undoStack.length});
+  appendOperationLog("undo", {
+    remainingUndo:undoStack.length,
+    revertedSeq:revertedEvent ? revertedEvent.seq : null,
+    revertedEvent:revertedEvent
+  });
   save();
   renderBoard();
   renderUndoButton();
 }
 
 function exportOperationLog(){
-  var lines = (state.operationLog || []).map(function(entry){ return JSON.stringify(entry); }).join("\n");
+  var exportEntries = (state.operationLog || []).slice();
+  exportEntries.push(buildScoreLogEntry());
+  var lines = exportEntries.map(function(entry){ return JSON.stringify(entry); }).join("\n");
   var blob = new Blob([lines + (lines ? "\n" : "")], {type:"application/x-ndjson;charset=utf-8"});
   var url = URL.createObjectURL(blob);
   var link = document.createElement("a");
@@ -680,6 +692,58 @@ function exportOperationLog(){
   link.click();
   link.remove();
   setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+function compactCardState(card){
+  return {
+    uid:card.uid,
+    cardNo:card.cardNo,
+    name:card.name,
+    type:card.type,
+    initialZone:card.initialZone,
+    exhausted:!!card.exhausted,
+    progressTokens:card.progressTokens || 0,
+    materialTokens:card.materialTokens || 0,
+    populationTokens:card.populationTokens || 0,
+    garrison:(card.garrison || []).map(compactCardState)
+  };
+}
+
+function zoneStateForLog(zoneId){
+  var zone = state.zones[zoneId];
+  return {
+    label:ZONE_DEFS[zoneId] ? ZONE_DEFS[zoneId].label : zoneId,
+    count:(zone.cards || []).length,
+    exhaustedCounter:zone.exhaustedCounter || 0,
+    tokens:Object.assign({}, zone.tokens || {}),
+    cards:(zone.cards || []).map(compactCardState)
+  };
+}
+
+function buildTurnStateSnapshot(){
+  var zoneIds = ["Pl_Hand","Pl_Field","Bot_ActionDeck","Bot_Field"];
+  var zones = {};
+  zoneIds.forEach(function(zoneId){ zones[zoneId] = zoneStateForLog(zoneId); });
+  return {
+    playerState:state.playerState,
+    botState:state.botActionState,
+    resources:JSON.parse(JSON.stringify(state.resources)),
+    zones:zones,
+    otherZoneCounts:{
+      Pl_DrawDeck:state.zones.Pl_DrawDeck.cards.length,
+      Pl_Pile:state.zones.Pl_Pile.cards.length,
+      Pl_History:state.zones.Pl_History.cards.length,
+      Bot_DrawDeck:state.zones.Bot_DrawDeck.cards.length,
+      Bot_Pile:state.zones.Bot_Pile.cards.length,
+      Bot_History:state.zones.Bot_History.cards.length
+    }
+  };
+}
+
+function buildFinalPlacement(){
+  var zones = {};
+  Object.keys(state.zones).forEach(function(zoneId){ zones[zoneId] = zoneStateForLog(zoneId); });
+  return zones;
 }
 
 /* ============================================================
@@ -940,6 +1004,7 @@ function zoneOrderFor(owner){
 function renderBoard(){
   renderTurn();
   renderResources();
+  renderPhaseControls();
   renderBotDie();
   renderZoneRow("rowPlayer", "player");
   renderPlayerPowerCard();
@@ -950,6 +1015,15 @@ function renderBoard(){
   renderZoneRow("rowBot", "bot");
   renderBotActionDeck();
   renderUndoButton();
+}
+
+function renderPhaseControls(){
+  var playerActive = state.phase === "player";
+  var playerEndConfirmed = state.phase === "player_end_confirmed";
+  var botDrawPending = state.phase === "bot" && state.botActionDrawPending;
+  document.getElementById("btnStartTurn").disabled = playerActive || playerEndConfirmed || botDrawPending;
+  document.getElementById("btnConfirmPlayerEnd").disabled = !playerActive;
+  document.getElementById("btnBotActionDraw").disabled = !(playerEndConfirmed || botDrawPending);
 }
 
 function renderFieldSymbols(elementId, zoneId){
@@ -1065,6 +1139,54 @@ function calculateSideScore(side){
   return result;
 }
 
+function calculatePlayerHoldings(playerEntries){
+  var symbolCounts = {};
+  SYMBOL_TYPES.forEach(function(symbol){ symbolCounts[symbol] = 0; });
+  var typeCounts = {Civilised:0, Uncivilised:0, Region:0, Tributary:0};
+  playerEntries.forEach(function(entry){
+    if(Object.prototype.hasOwnProperty.call(typeCounts, entry.card.type)) typeCounts[entry.card.type]++;
+    (entry.card.symbols || []).forEach(function(symbol){
+      if(Object.prototype.hasOwnProperty.call(symbolCounts, symbol)) symbolCounts[symbol]++;
+    });
+  });
+  var controlledCards = state.zones.Pl_Field.cards || [];
+  return {
+    materialTokens:state.resources.player.material,
+    populationTokens:state.resources.player.population,
+    civilisedCards:typeCounts.Civilised,
+    uncivilisedCards:typeCounts.Uncivilised,
+    regionCards:typeCounts.Region,
+    tributaryCards:typeCounts.Tributary,
+    totalCards:playerEntries.length,
+    nonRegionControlledCards:controlledCards.filter(function(card){ return card.type !== "Region"; }).length,
+    symbols:symbolCounts
+  };
+}
+
+function buildScoreLogEntry(){
+  var player = calculateSideScore("player");
+  var bot = calculateSideScore("bot");
+  function scoreData(result){
+    return {progress:result.progress,fame:result.fame,fameCount:result.fameCount,fixed:result.fixed,star:result.star,starCount:result.starCount,other:result.other,total:result.total};
+  }
+  return {
+    schemaVersion:1,
+    seq:(state.operationSeq || 0) + 1,
+    time:new Date().toISOString(),
+    turn:state.turn,
+    phase:state.phase || "setup",
+    actor:"system",
+    event:"score_summary",
+    gameId:state.gameId,
+    exportedOnly:true,
+    player:{nation:state.playerNation,score:scoreData(player)},
+    bot:{nation:state.botNation,score:scoreData(bot)},
+    playerHoldings:calculatePlayerHoldings(player.entries),
+    manualVp:player.manualCards.concat(bot.manualCards).map(function(card){ return {uid:card.uid,cardNo:card.cardNo,name:card.name,vp:manualVp(card)}; }),
+    finalPlacement:buildFinalPlacement()
+  };
+}
+
 function renderScoreWindow(){
   var player = calculateSideScore("player");
   var bot = calculateSideScore("bot");
@@ -1087,26 +1209,17 @@ function renderScoreWindow(){
       '<label><span class="helptext">VP</span><input type="number" data-score-manual="'+item.card.uid+'" value="'+manualVp(item.card)+'"></label></div>';
   });
 
-  var controlledCards = state.zones.Pl_Field.cards || [];
-  var nonRegionControlledCount = controlledCards.filter(function(card){ return card.type !== "Region"; }).length;
-  var symbolCounts = {};
-  SYMBOL_TYPES.forEach(function(symbol){ symbolCounts[symbol] = 0; });
-  player.entries.forEach(function(entry){
-    (entry.card.symbols || []).forEach(function(symbol){
-      if(Object.prototype.hasOwnProperty.call(symbolCounts, symbol)) symbolCounts[symbol]++;
-    });
-  });
-  function countType(type){ return player.entries.filter(function(e){ return e.card.type === type; }).length; }
+  var holdings = calculatePlayerHoldings(player.entries);
   html += '<div class="score-section-title">プレイヤーの所持カード確認</div>';
   html += '<table class="score-table"><tbody>'+
     '<tr><td>物資トークン数</td><td>'+state.resources.player.material+'</td><td>人口トークン数</td><td>'+state.resources.player.population+'</td></tr>'+
-    '<tr><td>所持文明カード数</td><td>'+countType("Civilised")+'</td><td>所持未開カード数</td><td>'+countType("Uncivilised")+'</td></tr>'+
-    '<tr><td>所持領地カード数</td><td>'+countType("Region")+'</td><td>所持属州カード数</td><td>'+countType("Tributary")+'</td></tr>'+
-    '<tr><td>総カード枚数</td><td>'+player.entries.length+'</td><td>領地以外の支配カード</td><td>'+nonRegionControlledCount+'</td></tr>'+
-    '<tr><td>麦</td><td>'+symbolCounts["麦"]+'</td><td>袋</td><td>'+symbolCounts["袋"]+'</td></tr>'+
-    '<tr><td>水</td><td>'+symbolCounts["水"]+'</td><td>都市</td><td>'+symbolCounts["都市"]+'</td></tr>'+
-    '<tr><td>大都市</td><td>'+symbolCounts["大都市"]+'</td><td>仮面</td><td>'+symbolCounts["仮面"]+'</td></tr>'+
-    '<tr><td>兜</td><td>'+symbolCounts["兜"]+'</td><td></td><td></td></tr>'+
+    '<tr><td>所持文明カード数</td><td>'+holdings.civilisedCards+'</td><td>所持未開カード数</td><td>'+holdings.uncivilisedCards+'</td></tr>'+
+    '<tr><td>所持領地カード数</td><td>'+holdings.regionCards+'</td><td>所持属州カード数</td><td>'+holdings.tributaryCards+'</td></tr>'+
+    '<tr><td>総カード枚数</td><td>'+holdings.totalCards+'</td><td>領地以外の支配カード</td><td>'+holdings.nonRegionControlledCards+'</td></tr>'+
+    '<tr><td>麦</td><td>'+holdings.symbols["麦"]+'</td><td>袋</td><td>'+holdings.symbols["袋"]+'</td></tr>'+
+    '<tr><td>水</td><td>'+holdings.symbols["水"]+'</td><td>都市</td><td>'+holdings.symbols["都市"]+'</td></tr>'+
+    '<tr><td>大都市</td><td>'+holdings.symbols["大都市"]+'</td><td>仮面</td><td>'+holdings.symbols["仮面"]+'</td></tr>'+
+    '<tr><td>兜</td><td>'+holdings.symbols["兜"]+'</td><td></td><td></td></tr>'+
     '</tbody></table>';
 
   scoreDrawer.innerHTML = html;
@@ -1116,7 +1229,7 @@ function renderScoreWindow(){
       var uid = input.getAttribute("data-score-manual");
       var before = Number(state.scoringManual[uid]) || 0;
       var after = Number(input.value) || 0;
-      if(before !== after) beginOperation("manual_score_change", {cardUid:Number(uid),before:before,after:after});
+      if(before !== after) beginOperation("manual_score_change", {actor:"player",cardUid:Number(uid),before:before,after:after});
       state.scoringManual[uid] = after;
       save(); renderScoreWindow();
     });
@@ -1252,19 +1365,52 @@ document.getElementById("btnStartTurn").addEventListener("click", function(){
   state.turn++;
   var result = rollBotDie();
   state.phase = "player";
+  state.botActionDrawPending = false;
   commitOperation(snapshot, "player_turn_start", {nextTurn:state.turn,botDie:result});
   appendOperationLog("die_roll", {side:"bot", result:result,trigger:"player_turn_start"});
   save();
   renderTurn();
   renderBotDie();
+  renderPhaseControls();
   openTurnActionDialog();
 });
 
-document.getElementById("btnStartBotTurn").addEventListener("click", function(){
+function collectPlayerExhaustion(){
+  var recovered = 0;
+  var cards = [];
+  var zones = [];
+  Object.keys(state.zones).forEach(function(zoneId){
+    if(zoneId.indexOf("Pl_") !== 0) return;
+    var zone = state.zones[zoneId];
+    if(zone.exhaustedCounter){
+      recovered += zone.exhaustedCounter;
+      zones.push({zone:zoneId, before:zone.exhaustedCounter, after:0});
+      zone.exhaustedCounter = 0;
+    }
+    function collectCard(card){
+      if(card.exhausted){
+        card.exhausted = false;
+        recovered++;
+        cards.push({zone:zoneId, cardUid:card.uid, cardNo:card.cardNo});
+      }
+      (card.garrison || []).forEach(collectCard);
+    }
+    zone.cards.forEach(collectCard);
+  });
+  var before = state.resources.player.exhaustion;
+  state.resources.player.exhaustion += recovered;
+  return {recovered:recovered, before:before, after:state.resources.player.exhaustion, cards:cards, zones:zones};
+}
+
+document.getElementById("btnConfirmPlayerEnd").addEventListener("click", function(){
+  if(state.phase !== "player") return;
+  if(!confirm("終了時効果と手札枚数を確認しましたか？\n消耗トークンを回収して、プレイヤーのターンを終了します。")) return;
   var snapshot = operationSnapshot();
-  state.phase = "bot";
-  commitOperation(snapshot, "bot_turn_start", {});
+  var exhaustionRecovery = collectPlayerExhaustion();
+  state.phase = "player_end_confirmed";
+  commitOperation(snapshot, "player_turn_end_confirmed", {actor:"player",phaseBefore:"player",phaseAfter:"player_end_confirmed",exhaustionRecovery:exhaustionRecovery,turnState:buildTurnStateSnapshot()});
   save();
+  renderBoard();
 });
 
 document.getElementById("btnUndo").addEventListener("click", undoLastOperation);
@@ -1333,22 +1479,37 @@ function updateBotActionTargetFromInput(){
 document.getElementById("botActionTarget").addEventListener("change", updateBotActionTargetFromInput);
 
 document.getElementById("btnBotActionDraw").addEventListener("click", function(){
+  if(state.phase !== "player_end_confirmed" && !(state.phase === "bot" && state.botActionDrawPending)) return;
   var target = updateBotActionTargetFromInput();
+  var snapshot = operationSnapshot();
+  var phaseBefore = state.phase;
+  state.phase = "bot";
   var actionDeck = state.zones.Bot_ActionDeck;
   var deck = state.zones.Bot_DrawDeck;
   var needed = Math.max(0, target - actionDeck.cards.length);
-  if(needed === 0) return;
+  if(needed === 0){
+    state.botActionDrawPending = false;
+    commitOperation(snapshot, "bot_action_draw", {actor:"bot",from:"Bot_DrawDeck",to:"Bot_ActionDeck",position:"bottom",target:target,drawn:0,phaseBefore:phaseBefore,phaseAfter:"bot",status:"target_reached"});
+    save(); renderPhaseControls();
+    return;
+  }
   if(deck.cards.length === 0){
+    state.botActionDrawPending = true;
+    commitOperation(snapshot, "bot_action_draw", {actor:"bot",from:"Bot_DrawDeck",to:"Bot_ActionDeck",position:"bottom",target:target,drawn:0,phaseBefore:phaseBefore,phaseAfter:"bot",status:"deck_empty"});
+    save(); renderPhaseControls();
     alert("BOTデッキが空になりました。BOTの捨て札パイルをリシャッフルしてから、もう一度『アクションドロー』を押してください。");
     return;
   }
-  var snapshot = operationSnapshot();
   var drawCount = Math.min(needed, deck.cards.length);
   var stoppedByEmptyDeck = drawCount < needed;
+  state.botActionDrawPending = stoppedByEmptyDeck;
   var moving = deck.cards.splice(0, drawCount);
   applyMove(moving, "Bot_ActionDeck", false, "Bot_DrawDeck", {
     operationSnapshot:snapshot,
     directAction:"bot_action_draw",
+    phaseBefore:phaseBefore,
+    phaseAfter:"bot",
+    actionTarget:target,
     afterMove:function(completed){
       if(completed && stoppedByEmptyDeck){
         alert("BOTデッキが空になりました。BOTの捨て札パイルをリシャッフルしてから、もう一度『アクションドロー』を押してください。");
@@ -1460,7 +1621,7 @@ function renderMarketCards(){
         var snapshot = operationSnapshot();
         zone.cards = zone.cards.filter(function(c){ return c.uid !== uid; });
         applyMove([card], destId, toTop, zoneId, {operationSnapshot:snapshot});
-      }, zoneId);
+      }, zoneId, [card]);
     });
   });
 }
@@ -1746,11 +1907,16 @@ function renderDeckControls(def, zone){
   var typesPresent = Array.from(new Set(zone.cards.map(function(c){return c.type;}).filter(Boolean)));
   var hasDirectDiscard = def.id === "Pl_NationDeck" || def.id === "Bot_DynastyDeck";
   var html = '<div class="deck-actions">';
-  if(!def.id.endsWith("_NationDeck")) html += '<button class="btn" id="daShuffle">シャッフル</button>';
+  if(!hasDirectDiscard) html += '<button class="btn" id="daShuffle">シャッフル</button>';
   if(hasDirectDiscard) html += '<button class="btn primary" id="daDiscardTop"'+(zone.cards.length ? '' : ' disabled')+'>1枚捨てる</button>';
+  if(hasDirectDiscard){
+    var refillDeckId = def.id === "Pl_NationDeck" ? "Pl_DrawDeck" : "Bot_DrawDeck";
+    var canDeckReshuffle = zone.cards.length > 0 && state.zones[refillDeckId].cards.length === 0;
+    html += '<button class="btn primary" id="daDeckReshuffle"'+(canDeckReshuffle ? '' : ' disabled')+'>リシャッフル</button>';
+  }
   html += '<div class="n-input"><span style="font-size:0.75rem;color:var(--parchment-faint);">移動</span><button class="btn step-btn" id="daNMinus" aria-label="移動枚数を減らす">−</button><input type="number" id="daN" value="1" min="1" max="'+Math.max(1, zone.cards.length)+'" inputmode="numeric"><button class="btn step-btn" id="daNPlus" aria-label="移動枚数を増やす">＋</button><button class="btn small" id="daMove">実行</button></div>';
   html += '</div>';
-  if(def.id.endsWith("_NationDeck")) html += '<p class="helptext">継承カードを最下部に固定するため、このデッキはゲーム中にシャッフルできません。</p>';
+  if(hasDirectDiscard) html += '<p class="helptext">通常のシャッフルはできません。リシャッフルはドローデッキが空のとき、先頭1枚を捨て札に加えてから捨て札全体を補充します。</p>';
   if(typesPresent.length > 0){
     html += '<div style="margin-bottom:10px;"><div style="font-size:0.72rem;color:var(--parchment-faint);margin-bottom:6px;">検索（指定属性）</div><div class="dest-list">';
     typesPresent.forEach(function(t){
@@ -1851,7 +2017,7 @@ function renderActionBar(def, zone){
     var canReshuffle = zone.cards.length > 0 && state.zones[reshuffleDeckId].cards.length === 0;
     html += '<button class="btn primary" id="abReshuffle"'+(canReshuffle?'':' disabled')+'>リシャッフル</button>';
   }
-  html += '<button class="btn primary" id="abMove">選択したカードを移動</button>';
+  if(def.id !== "Bot_History") html += '<button class="btn primary" id="abMove">選択したカードを移動</button>';
   if(currentZoneId === "Pl_Field"){
     html += '<button class="btn" id="abGarrison">下に置く（2枚選択）</button>';
   }
@@ -1955,6 +2121,33 @@ function wireZoneDrawerEvents(def, zone){
       applyMove([moving], destination, true, currentZoneId, {operationSnapshot:snapshot,directAction:"discard_top"});
       closeZoneDrawer();
     });
+    var deckReshuffleButton = document.getElementById("daDeckReshuffle");
+    if(deckReshuffleButton) deckReshuffleButton.addEventListener("click", function(){
+      var isPlayer = currentZoneId === "Pl_NationDeck";
+      var discardId = isPlayer ? "Pl_Pile" : "Bot_Pile";
+      var destinationId = isPlayer ? "Pl_DrawDeck" : "Bot_DrawDeck";
+      if(state.zones[destinationId].cards.length > 0){
+        alert(ZONE_DEFS[destinationId].label+"にカードが残っているため、リシャッフルできません");
+        return;
+      }
+      if(zone.cards.length === 0){ alert(ZONE_DEFS[currentZoneId].label+"にカードがありません"); return; }
+      var snapshot = operationSnapshot();
+      var discardedTop = zone.cards.shift();
+      var discardPile = state.zones[discardId];
+      discardPile.cards.unshift(discardedTop);
+      shuffleArray(discardPile.cards);
+      var moving = discardPile.cards.slice();
+      discardPile.cards = [];
+      applyMove(moving, destinationId, true, discardId, {
+        operationSnapshot:snapshot,
+        directAction:"reshuffle_with_deck_top",
+        steps:[
+          {from:currentZoneId,to:discardId,position:"top",card:{uid:discardedTop.uid,cardNo:discardedTop.cardNo,name:discardedTop.name}},
+          {from:discardId,to:destinationId,position:"top",shuffle:true,count:moving.length}
+        ]
+      });
+      closeZoneDrawer();
+    });
     document.getElementById("daMove").addEventListener("click", function(){
       var n = Math.max(1, Math.min(zone.cards.length, Number(moveCountInput.value)||1));
       if(zone.cards.length === 0){ alert("デッキにカードがありません"); return; }
@@ -1963,7 +2156,7 @@ function wireZoneDrawerEvents(def, zone){
         var moving = zone.cards.splice(0, n);
         applyMove(moving, destId, toTop, currentZoneId, {operationSnapshot:snapshot});
         closeZoneDrawer();
-      });
+      }, currentZoneId, zone.cards.slice(0, n));
     });
     zoneDrawer.querySelectorAll("[data-search-type]").forEach(function(el){
       el.addEventListener("click", function(){
@@ -1985,7 +2178,7 @@ function wireZoneDrawerEvents(def, zone){
       });
       applyMove(moving, destId, toTop, currentZoneId, {operationSnapshot:snapshot});
       closeZoneDrawer();
-    });
+    }, currentZoneId, zone.cards.filter(function(c){ return uids.indexOf(c.uid) >= 0; }));
   });
 
   var abGarrison = document.getElementById("abGarrison");
@@ -2219,7 +2412,14 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
 
     var evolved = [];
     separatedCards.forEach(function(card){
-      var side = destId === "Pl_Pile" ? "player" : (destId === "Bot_Pile" ? "bot" : null);
+      var accessionDiscardId = destId;
+      if(moveContext && Array.isArray(moveContext.steps)){
+        var discardStep = moveContext.steps.find(function(step){
+          return step.card && step.card.uid === card.uid && (step.to === "Pl_Pile" || step.to === "Bot_Pile");
+        });
+        if(discardStep) accessionDiscardId = discardStep.to;
+      }
+      var side = accessionDiscardId === "Pl_Pile" ? "player" : (accessionDiscardId === "Bot_Pile" ? "bot" : null);
       // 継承・国家・発展の所属はカード種別ではなく初期配置先で判定する。
       // 継承カード自体が領地などの type を持つ場合にも、自動帝国化を適用する。
       if(side && card.initialZone === "Accession" && changeCivilisationState(side, "Empire")) evolved.push(side);
@@ -2233,6 +2433,10 @@ function applyMove(cards, destId, toTop, sourceId, moveContext){
       to:destId,
       position:toTop ? "top" : "bottom",
       tokenHandling:tokenHandling,
+      steps:(moveContext && moveContext.steps) || null,
+      phaseBefore:(moveContext && moveContext.phaseBefore) || null,
+      phaseAfter:(moveContext && moveContext.phaseAfter) || null,
+      actionTarget:(moveContext && moveContext.actionTarget) || null,
       card:movedCardsForLog.length === 1 ? movedCardsForLog[0] : null,
       cards:movedCardsForLog
     });
@@ -2279,16 +2483,49 @@ var destOverlay = document.getElementById("destOverlay");
 var destDrawer = document.getElementById("destDrawer");
 var destToTop = true;
 
-function openDestPicker(onPick, excludedZoneId){
+var MOVE_DESTINATIONS = {
+  Pl_NationDeck: ["Pl_DrawDeck", "Pl_Pile", "Temp"],
+  Pl_DrawDeck: ["Pl_Pile", "Pl_Hand", "Temp"],
+  Pl_Pile: ["Pl_DrawDeck", "Pl_Hand", "Temp", "Pl_History", "UnrestPile"],
+  Pl_DevelopDeck: ["Pl_Pile", "Temp"],
+  Pl_History: ["Pl_Pile", "Pl_Hand", "Temp"],
+  Pl_Hand: ["Pl_Pile", "Pl_History", "Temp", "Pl_Field", "UnrestPile"],
+  Bot_DynastyDeck: ["Bot_DrawDeck", "Bot_Pile"],
+  Bot_DrawDeck: ["Bot_ActionDeck", "Bot_Pile", "Bot_History"],
+  Bot_Pile: ["Bot_History", "Bot_DrawDeck", "UnrestPile"],
+  Bot_History: [],
+  Bot_Field: ["Bot_Pile"],
+  Bot_ActionDeck: ["Bot_DrawDeck", "Bot_Pile", "ExilePile", "UnrestPile", "Bot_Field", "Bot_History"]
+};
+
+function getMoveDestinations(sourceId, movingCards){
+  var allowed = MOVE_DESTINATIONS[sourceId];
+  var sourceDef = ZONE_DEFS[sourceId];
+  if(sourceDef && sourceDef.owner === "shared" && sourceDef.type === "deck"){
+    allowed = ["Temp", "Pl_Hand", "Pl_Pile", "Bot_Pile", "ExilePile"];
+  }
+  var publicMarkets = ["MainPile1", "MainPile2", "CivilisedPile", "UncivilisedPile", "RegionPile"];
+  if(publicMarkets.indexOf(sourceId) >= 0){
+    allowed = ["Pl_Hand", "ExilePile", "Bot_Pile", "UnrestPile"];
+  }
+  return (allowed || Object.keys(ZONE_DEFS)).filter(function(id){
+    return id !== sourceId && !ZONE_DEFS[id].hiddenFromBoard;
+  });
+}
+
+function openDestPicker(onPick, excludedZoneId, movingCards){
+  var destinations = getMoveDestinations(excludedZoneId, movingCards);
+  if(destinations.length === 0) return;
   destToTop = true;
   var html = '<div class="drawer-header"><h2>移動先を選択</h2><button class="close" id="destClose">✕</button></div>';
   html += '<div class="dest-toggle"><button id="toTopBtn" class="on">先頭へ</button><button id="toBottomBtn">末尾へ</button></div>';
   ["player","shared","bot"].forEach(function(owner){
+    if(!destinations.some(function(id){ return ZONE_DEFS[id].owner === owner; })) return;
     var groupLabel = owner==="player" ? (state.playerNation||"自分") : (owner==="bot" ? (state.botNation||"BOT") : "市場");
     html += '<div class="dest-group"><h3>'+escapeHtml(groupLabel)+'</h3><div class="dest-list">';
-    Object.keys(ZONE_DEFS).forEach(function(id){
+    destinations.forEach(function(id){
       var def = ZONE_DEFS[id];
-      if(def.owner !== owner || id === excludedZoneId || def.hiddenFromBoard) return;
+      if(def.owner !== owner) return;
       var z = state.zones[id];
       html += '<button data-dest="'+id+'">'+escapeHtml(def.label)+' <span class="c">('+z.cards.length+')</span></button>';
     });
