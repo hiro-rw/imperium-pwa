@@ -351,6 +351,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
     <h1>IMPERIUM <span id="matchLabel" style="color:var(--parchment-faint);font-size:0.75rem;"></span></h1>
     <div class="top-button-scroll">
       <button class="btn small primary" id="btnStartTurn">プレイヤー開始</button>
+      <button class="btn small primary" id="btnConfirmPlayerEnd">終了確認</button>
       <button class="btn small" id="btnUndo" disabled>1手戻す</button>
       <button class="btn small" id="btnScore">集計</button>
       <button class="btn small danger" id="btnNewGame">新しいゲーム</button>
@@ -381,7 +382,7 @@ ul.card-list li.card-type-neutral{border-left:4px solid #aaa397;background:#3C38
         </div>
         <div class="status-action-grid bot-actions">
           <div class="state-control-row" id="botStateControls"></div>
-          <div class="quick-action-row"><button class="btn small primary" id="btnConfirmPlayerEnd">終了確認</button><button class="btn small" id="btnBotDiscardOne">1枚破棄</button></div>
+          <div class="quick-action-row"><button class="btn small" id="btnBotDiscardOne">1枚破棄</button></div>
           <div class="bot-action-draw"><button class="btn small primary" id="btnBotActionDraw">アクションドロー</button><input type="number" id="botActionTarget" value="5" min="1" inputmode="numeric" aria-label="BOT ActionDeckの目標枚数"></div>
         </div>
       </section>
@@ -521,7 +522,7 @@ var state = null; // set on start/resume
 var rawRows = []; // parsed CSV rows before game start
 var botActionRows = []; // shared BOT action reference data
 var undoStack = []; // session-only snapshots; newest item is last
-var UNDO_LIMIT = 10;
+var UNDO_LIMIT = 50;
 
 function freshState(playerNation, botNation){
   var zones = {};
